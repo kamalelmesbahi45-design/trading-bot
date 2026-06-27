@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import typer
@@ -33,12 +34,51 @@ def info(config: str | None = typer.Option(None, "--config", "-c")) -> None:
 
 @app.command()
 def data(
-    action: str = typer.Argument(..., help="fetch | update | inspect"),
-    years: int = typer.Option(10, "--years"),
+    action: str = typer.Argument(..., help="fetch | calendar | inspect"),
+    years: int = typer.Option(10, "--years", help="Years of history to fetch (for action=fetch)."),
+    cache_dir: Path = typer.Option(Path("data/cache"), "--cache-dir"),
+    cross_asset_interval: str = typer.Option("1h", "--cross-interval"),
 ) -> None:
-    """Data layer commands (Dukascopy ticks, yfinance cross-asset, FF calendar)."""
-    logger.info(f"data {action} years={years}")
-    raise NotImplementedError("Wire up in data layer phase.")
+    """Data layer commands.
+
+    Actions:
+        fetch    -- Dukascopy XAUUSD ticks + yfinance cross-asset for the last N years.
+        calendar -- ForexFactory current-window event calendar.
+        inspect  -- Print cache summary (counts and sizes).
+    """
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    end = datetime.now(UTC).replace(tzinfo=None)
+    start = end - timedelta(days=int(365.25 * years))
+
+    if action == "fetch":
+        from xauusd_bot.data.dukascopy import DukascopyConfig, download_ticks
+        from xauusd_bot.data.yfinance_loader import YFinanceConfig, fetch_cross_asset
+
+        logger.info(f"fetching {years}y XAUUSD ticks from Dukascopy into {cache_dir} ...")
+        ticks = download_ticks(start, end, DukascopyConfig(cache_dir=cache_dir))
+        logger.info(f"ticks: {len(ticks):,} rows")
+        logger.info(f"fetching cross-asset @ {cross_asset_interval} ...")
+        wide = fetch_cross_asset(start, end, YFinanceConfig(cache_dir=cache_dir, interval=cross_asset_interval))
+        logger.info(f"cross-asset: {len(wide):,} rows across {wide['ticker'].nunique() if not wide.empty else 0} tickers")
+        return
+
+    if action == "calendar":
+        from xauusd_bot.data.calendar import fetch_current_window
+
+        events = fetch_current_window(cache_dir=cache_dir)
+        rprint(events.head(50))
+        rprint(f"total events: {len(events)}")
+        return
+
+    if action == "inspect":
+        sizes: dict[str, int] = {}
+        if cache_dir.exists():
+            for p in cache_dir.rglob("*.parquet"):
+                sizes[p.relative_to(cache_dir).parts[0]] = sizes.get(p.relative_to(cache_dir).parts[0], 0) + 1
+        rprint({"cache_dir": str(cache_dir), "parquet_counts_by_kind": sizes})
+        return
+
+    raise typer.BadParameter(f"unknown action: {action}")
 
 
 @app.command()
