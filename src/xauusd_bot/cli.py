@@ -107,20 +107,53 @@ def backtest(
 @app.command()
 def wfo(
     config: str | None = typer.Option(None, "--config", "-c"),
+    bars_parquet: Path = typer.Option(..., "--bars"),
     is_years: float = typer.Option(2.0, "--is"),
     oos_months: int = typer.Option(6, "--oos"),
+    step_months: int = typer.Option(6, "--step"),
 ) -> None:
-    """Run walk-forward optimisation."""
+    """Run walk-forward out-of-sample validation."""
+    from xauusd_bot.data.storage import load_parquet
+    from xauusd_bot.optimize.walk_forward import WalkForward
+
     cfg = load_config(_cfg_path(config))
-    logger.info(f"wfo profile={cfg.profile} IS={is_years}y OOS={oos_months}m")
-    raise NotImplementedError("Wire up in optimiser phase.")
+    bars = load_parquet(bars_parquet)
+    if bars.empty:
+        raise typer.BadParameter("bars file is empty")
+    logger.info(f"wfo profile={cfg.profile} IS={is_years}y OOS={oos_months}m step={step_months}m bars={len(bars):,}")
+    wf = WalkForward(cfg, is_years=is_years, oos_months=oos_months, step_months=step_months)
+    res = wf.run(bars, start=bars.index[0].to_pydatetime(), end=bars.index[-1].to_pydatetime())
+    rprint(f"folds: {len(res.fold_results)}  stability: {res.stability_score:.3f}")
+    rprint(f"OOS curve points: {len(res.oos_equity)}")
+    for f in res.fold_results:
+        rprint(f)
 
 
 @app.command()
-def report(run: str = typer.Option("latest", "--run")) -> None:
-    """Render HTML report for a backtest/WFO run."""
-    logger.info(f"report run={run}")
-    raise NotImplementedError("Wire up in reports phase.")
+def report(
+    config: str | None = typer.Option(None, "--config", "-c"),
+    bars_parquet: Path = typer.Option(..., "--bars"),
+    out: Path = typer.Option(Path("reports/output"), "--out"),
+    mc_runs: int = typer.Option(2000, "--mc-runs"),
+) -> None:
+    """Run backtest + Monte Carlo and render the HTML report."""
+    from xauusd_bot.backtest.engine import BacktestEngine
+    from xauusd_bot.data.storage import load_parquet
+    from xauusd_bot.optimize.metrics import compute_stats
+    from xauusd_bot.optimize.monte_carlo import shuffle_trades
+    from xauusd_bot.reports.html_report import render_report
+
+    cfg = load_config(_cfg_path(config))
+    bars = load_parquet(bars_parquet)
+    logger.info(f"report profile={cfg.profile} bars={len(bars):,}")
+    res = BacktestEngine(cfg).run(bars)
+    stats = compute_stats(res.equity_curve, res.trades)
+    mc = shuffle_trades(res.trades, n_runs=mc_runs, seed=0,
+                       starting_equity=cfg.account.starting_equity,
+                       ruin_dd_pct=cfg.risk.max_drawdown_pct)
+    path = render_report(out, res.equity_curve, res.trades, stats=stats, mc_result=mc,
+                        title=f"XAUUSD bot report -- {cfg.profile}")
+    rprint(f"report written: {path}")
 
 
 @app.command()
