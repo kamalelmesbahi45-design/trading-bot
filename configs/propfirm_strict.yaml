@@ -1,0 +1,79 @@
+# Prop-firm profile (FTMO-style defaults). Survival > returns.
+profile: propfirm_strict
+
+account:
+  starting_equity: 100000.0      # typical challenge size
+  currency: USD
+  leverage: 100
+
+risk:
+  per_trade_pct: 0.005           # 0.5% per trade
+  sizer: fractional_kelly
+  kelly_fraction: 0.15           # tighter than personal
+  kelly_lookback_trades: 100
+  kelly_min_trades: 30
+  hard_cap_per_trade_pct: 0.01
+  max_concurrent_positions: 2
+  daily_loss_limit_pct: 0.04     # halt at -4% daily (FTMO is -5%, leave 1% buffer)
+  max_drawdown_pct: 0.08         # halt at -8% total (FTMO is -10%)
+  profit_target_pct: 0.08
+  min_trading_days: 4
+  trailing_stop: true
+
+stops:
+  type: atr
+  atr_period: 14
+  atr_mult_sl: 1.8               # tighter
+  atr_mult_tp: 3.2
+  breakeven_at_r: 0.8            # quicker to breakeven
+
+filters:
+  session:
+    enabled: true
+    windows_utc:
+      - { start: "07:00", end: "16:00" }
+  news:
+    enabled: true
+    blackout_minutes_before: 30  # stricter
+    blackout_minutes_after: 30
+    impact_levels: ["high", "medium"]
+  weekend:
+    flatten_friday_utc: "19:00"
+    no_trades_until_monday_utc: "08:00"
+  regime:
+    enabled: true
+    atr_pct_min: 0.15
+    atr_pct_max: 1.20
+
+strategies:
+  trend_donchian:    { enabled: true, weight: 1.0, timeframe: H1 }
+  mr_bollinger:      { enabled: false, weight: 0.0, timeframe: M15 }  # MR rougher on DD
+  breakout_london:   { enabled: true, weight: 1.0, timeframe: M5 }
+  ml_filter:         { enabled: true, model: xgboost, threshold: 0.60 } # stricter
+
+macro:
+  quant_regime:      { enabled: true }
+  sentiment:         { enabled: false, model: finbert }
+  llm_analyst:       { enabled: false, model: claude-opus-4-7, cadence: daily }
+
+execution:
+  engine: mt5
+  symbol: XAUUSD
+  contract_size: 100
+  spread_model: dynamic
+  spread_static_points: 30
+  slippage_points: 8
+  commission_per_lot: 7.0
+  swap_long_pct: -0.0002
+  swap_short_pct: -0.0003
+
+reporting:
+  output_dir: reports/output
+  open_in_browser: false
+
+alerts:
+  telegram:
+    enabled: true
+    on_fills: true
+    on_dd_warn_pct: 0.05         # warn early in prop mode
+    daily_summary_utc: "21:30"

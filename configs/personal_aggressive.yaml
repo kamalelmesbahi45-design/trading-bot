@@ -1,0 +1,77 @@
+# Personal account profile: prioritise compounding, no prop-firm DD constraints.
+profile: personal_aggressive
+
+account:
+  starting_equity: 10000.0
+  currency: USD
+  leverage: 100
+
+risk:
+  per_trade_pct: 0.01            # 1% risk per trade
+  sizer: fractional_kelly        # fractional_kelly | fixed_fractional | vol_target
+  kelly_fraction: 0.25           # 1/4 Kelly
+  kelly_lookback_trades: 100     # rolling window for Kelly stats
+  kelly_min_trades: 30           # don't size by Kelly until N trades
+  hard_cap_per_trade_pct: 0.02   # absolute ceiling regardless of Kelly
+  max_concurrent_positions: 3
+  daily_loss_limit_pct: null     # disabled
+  max_drawdown_pct: 0.25         # bot halts at -25%
+  trailing_stop: true
+
+stops:
+  type: atr                      # atr | structural | fixed
+  atr_period: 14
+  atr_mult_sl: 2.0
+  atr_mult_tp: 3.0               # 1.5R target by default
+  breakeven_at_r: 1.0
+
+filters:
+  session:
+    enabled: true
+    windows_utc:
+      - { start: "07:00", end: "16:00" }   # London + NY overlap window
+  news:
+    enabled: true
+    blackout_minutes_before: 15
+    blackout_minutes_after: 15
+    impact_levels: ["high"]
+  weekend:
+    flatten_friday_utc: "20:00"
+    no_trades_until_monday_utc: "07:00"
+  regime:
+    enabled: true
+    atr_pct_min: 0.10            # skip dead chop (ATR/price < 0.10%)
+    atr_pct_max: 1.50            # skip parabolic vol
+
+strategies:
+  trend_donchian:    { enabled: true, weight: 1.0, timeframe: H1 }
+  mr_bollinger:      { enabled: true, weight: 1.0, timeframe: M15 }
+  breakout_london:   { enabled: true, weight: 1.0, timeframe: M5 }
+  ml_filter:         { enabled: true, model: xgboost, threshold: 0.55 }
+
+macro:
+  quant_regime:      { enabled: true }
+  sentiment:         { enabled: false, model: finbert }
+  llm_analyst:       { enabled: false, model: claude-opus-4-7, cadence: daily }
+
+execution:
+  engine: paper                  # paper | mt5
+  symbol: XAUUSD
+  contract_size: 100             # 1 lot = 100 oz
+  spread_model: dynamic          # static | dynamic (session/news-aware)
+  spread_static_points: 25
+  slippage_points: 5
+  commission_per_lot: 7.0
+  swap_long_pct: -0.0002         # per night
+  swap_short_pct: -0.0003
+
+reporting:
+  output_dir: reports/output
+  open_in_browser: false
+
+alerts:
+  telegram:
+    enabled: true
+    on_fills: true
+    on_dd_warn_pct: 0.10
+    daily_summary_utc: "21:30"
