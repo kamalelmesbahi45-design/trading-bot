@@ -5,6 +5,10 @@ on:
     branches: [main, "claude/**"]
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -15,6 +19,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install
         run: |
@@ -23,10 +28,15 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Lint
-        run: ruff check src tests
+        run: python -m ruff check src tests
 
       - name: Type check
-        run: mypy src
+        run: python -m mypy src
 
       - name: Test
-        run: pytest -q
+        run: python -m pytest -q --maxfail=5 --cov=src/xauusd_bot --cov-report=term
+
+      - name: CLI smoke
+        run: |
+          python -m xauusd_bot.cli info -c configs/personal_aggressive.yaml > /dev/null
+          python -m xauusd_bot.cli info -c configs/propfirm_strict.yaml > /dev/null
