@@ -97,10 +97,22 @@ class Position:
     entry_ts: datetime
     sl_price: float | None = None
     tp_price: float | None = None
+    initial_sl_price: float | None = None     # frozen at entry, used for breakeven trigger
+    high_water_mark: float | None = None      # best mark seen, used for trailing SL
 
     def unrealized_pnl(self, mark: float, contract_size: int) -> float:
         sign = 1 if self.side is Side.LONG else -1
         return sign * (mark - self.entry_price) * self.qty * contract_size
+
+    def r_multiple(self, mark: float) -> float | None:
+        """Open PnL expressed as multiples of the initial stop distance (R)."""
+        if self.initial_sl_price is None:
+            return None
+        r_unit = abs(self.entry_price - self.initial_sl_price)
+        if r_unit == 0:
+            return None
+        sign = 1 if self.side is Side.LONG else -1
+        return sign * (mark - self.entry_price) / r_unit
 
 
 Timeframe = Literal["M1", "M5", "M15", "M30", "H1", "H4", "D1"]
