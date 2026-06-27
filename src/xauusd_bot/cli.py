@@ -84,13 +84,24 @@ def data(
 @app.command()
 def backtest(
     config: str | None = typer.Option(None, "--config", "-c"),
-    start: str = typer.Option("2014-01-01", "--start"),
-    end: str | None = typer.Option(None, "--end"),
+    bars_parquet: Path = typer.Option(..., "--bars", help="Path to OHLCV parquet (open/high/low/close)."),
+    start: str | None = typer.Option(None, "--start", help="ISO date to slice from."),
+    end: str | None = typer.Option(None, "--end", help="ISO date to slice to."),
 ) -> None:
-    """Run a single-shot backtest on the configured strategies."""
+    """Run a single-shot backtest on the configured strategies against a parquet bars file."""
+    from xauusd_bot.backtest.engine import BacktestEngine
+    from xauusd_bot.data.storage import load_parquet
+
     cfg = load_config(_cfg_path(config))
-    logger.info(f"backtest profile={cfg.profile} start={start} end={end}")
-    raise NotImplementedError("Wire up in backtest engine phase.")
+    bars = load_parquet(bars_parquet)
+    if start is not None:
+        bars = bars.loc[start:]
+    if end is not None:
+        bars = bars.loc[:end]
+    logger.info(f"backtest profile={cfg.profile} bars={len(bars):,} range=[{bars.index[0]}..{bars.index[-1]}]")
+    res = BacktestEngine(cfg).run(bars)
+    rprint(res.metadata)
+    rprint(f"trades: {len(res.trades)}  | equity curve points: {len(res.equity_curve)}")
 
 
 @app.command()
