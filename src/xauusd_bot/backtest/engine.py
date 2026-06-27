@@ -32,6 +32,8 @@ from xauusd_bot.risk.sizing import (
 )
 from xauusd_bot.risk.stops import StopPolicy
 from xauusd_bot.strategies.base import Strategy
+from xauusd_bot.strategies.breakout import AsianRangeBreakout, LondonOpenBreakout
+from xauusd_bot.strategies.mean_reversion import BollingerMR
 from xauusd_bot.strategies.trend import DonchianTrend
 from xauusd_bot.types import Bar, Order, OrderType, Position, Side, Signal
 
@@ -95,8 +97,15 @@ def _build_spread(cfg: BotConfig) -> StaticSpread | DynamicSpread:
 
 def _build_strategies(cfg: BotConfig) -> list[Strategy]:
     out: list[Strategy] = []
-    if cfg.strategies.get("trend_donchian") and cfg.strategies["trend_donchian"].enabled:
+    strats = cfg.strategies
+    if strats.get("trend_donchian") and strats["trend_donchian"].enabled:
         out.append(DonchianTrend(donchian_period=20))
+    if strats.get("mr_bollinger") and strats["mr_bollinger"].enabled:
+        out.append(BollingerMR())
+    if strats.get("breakout_london") and strats["breakout_london"].enabled:
+        out.append(LondonOpenBreakout())
+    if strats.get("breakout_asian") and strats["breakout_asian"].enabled:
+        out.append(AsianRangeBreakout())
     if not out:
         raise ValueError("no strategies enabled in config")
     return out
