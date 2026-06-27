@@ -61,28 +61,37 @@ def cagr(equity_curve: pd.Series) -> float:
     return float((end_eq / start_eq) ** (1.0 / years) - 1.0)
 
 
+def _daily_returns(equity_curve: pd.Series) -> pd.Series:
+    """Resample equity to daily closes before computing returns.
+
+    Mark-to-market equity on intraday bars has many near-flat bars between
+    trades; computing Sharpe directly on those crushes the return std and
+    produces nonsensical inflated ratios. Industry standard is daily.
+    """
+    if equity_curve.empty:
+        return equity_curve
+    daily = equity_curve.resample("1D").last().dropna()
+    return daily.pct_change().dropna()
+
+
 def sharpe(equity_curve: pd.Series, risk_free_rate: float = 0.0) -> float:
-    if len(equity_curve) < 3:
+    rets = _daily_returns(equity_curve)
+    if len(rets) < 2 or rets.std(ddof=0) == 0:
         return 0.0
-    rets = equity_curve.pct_change().dropna()
-    if rets.std(ddof=0) == 0:
-        return 0.0
-    bpy = _bars_per_year(equity_curve.index)
-    excess = rets - risk_free_rate / bpy
-    return float(excess.mean() / excess.std(ddof=0) * math.sqrt(bpy))
+    excess = rets - risk_free_rate / 252.0
+    return float(excess.mean() / excess.std(ddof=0) * math.sqrt(252.0))
 
 
 def sortino(equity_curve: pd.Series, risk_free_rate: float = 0.0) -> float:
-    if len(equity_curve) < 3:
+    rets = _daily_returns(equity_curve)
+    if len(rets) < 2:
         return 0.0
-    rets = equity_curve.pct_change().dropna()
     downside = rets.clip(upper=0.0)
     ds_std = downside.std(ddof=0)
     if ds_std == 0:
         return 0.0
-    bpy = _bars_per_year(equity_curve.index)
-    excess = rets.mean() - risk_free_rate / bpy
-    return float(excess / ds_std * math.sqrt(bpy))
+    excess = rets.mean() - risk_free_rate / 252.0
+    return float(excess / ds_std * math.sqrt(252.0))
 
 
 def deflated_sharpe(sharpe_obs: float, n_trials: int, n_obs: int, skew: float, kurt: float) -> float:

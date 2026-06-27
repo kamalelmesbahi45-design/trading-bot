@@ -43,8 +43,9 @@ def test_sharpe_zero_when_returns_constant() -> None:
 
 
 def test_sharpe_positive_on_rising_curve() -> None:
+    # Drift large enough to dominate seed noise -> realised Sharpe well > 1
     rng = np.random.default_rng(7)
-    rets = 0.001 + rng.normal(0, 0.005, 252)  # positive drift, ~0.1% daily mean
+    rets = 0.005 + rng.normal(0, 0.01, 252)
     eq = pd.Series(np.cumprod(1 + rets) * 10_000, index=pd.date_range("2024-01-01", periods=252, freq="1D", tz="UTC"))
     s = sharpe(eq)
     assert s > 1.0
