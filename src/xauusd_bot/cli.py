@@ -165,6 +165,52 @@ def paper(config: str | None = typer.Option(None, "--config", "-c")) -> None:
 
 
 @app.command()
+def agent(
+    mode: str = typer.Option("both", "--mode", "-m", help="day | swing | both"),
+    equity: float = typer.Option(100_000.0, "--equity", "-e", help="Account equity in $."),
+    risk_pct: float = typer.Option(0.005, "--risk-pct", "-r",
+                                   help="Per-trade risk as fraction of equity (0.005 = 0.5%)."),
+    tickers: str | None = typer.Option(None, "--tickers",
+                                       help="Comma-separated subset of internal tickers."),
+    min_conviction: float = typer.Option(0.35, "--min-conviction"),
+    no_network: bool = typer.Option(False, "--no-network",
+                                    help="Skip yfinance and use cached/CSV data only."),
+    cache_dir: Path = typer.Option(Path("data/cache/agent"), "--cache-dir"),
+    csv_dir: Path = typer.Option(Path("data/cache/multi"), "--csv-dir"),
+    json_out: Path | None = typer.Option(None, "--json", help="Optional path to write JSON output."),
+) -> None:
+    """Run the multi-asset macro agent and print today's opportunities.
+
+    Examples:
+        xauusd agent                                  # day + swing, $100k, 0.5% risk
+        xauusd agent --mode swing --equity 25000
+        xauusd agent --tickers GLD,SPX,BTC --mode day
+        xauusd agent --no-network --csv-dir data/cache/multi
+    """
+    import json as _json
+    from xauusd_bot.agent.data import DataConfig
+    from xauusd_bot.agent.report import format_text, to_dict
+    from xauusd_bot.agent.risk import RiskSettings
+    from xauusd_bot.agent.scanner import AgentSettings, run_agent
+
+    tickers_list = [t.strip().upper() for t in tickers.split(",")] if tickers else None
+    settings = AgentSettings(
+        mode=mode,
+        min_conviction=min_conviction,
+        risk=RiskSettings(equity=equity, risk_pct_per_trade=risk_pct),
+        data=DataConfig(cache_dir=cache_dir, csv_panel_dir=csv_dir,
+                        allow_network=not no_network),
+        tickers=tickers_list,
+    )
+    report = run_agent(settings)
+    print(format_text(report, equity=equity))
+    if json_out is not None:
+        json_out.parent.mkdir(parents=True, exist_ok=True)
+        json_out.write_text(_json.dumps(to_dict(report), indent=2, default=str))
+        rprint(f"json written: {json_out}")
+
+
+@app.command()
 def live(config: str | None = typer.Option(None, "--config", "-c")) -> None:
     """Run live on MT5. Requires MT5_* env vars and a healthy paper-test history."""
     cfg = load_config(_cfg_path(config))
