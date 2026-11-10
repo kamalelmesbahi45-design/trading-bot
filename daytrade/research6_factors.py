@@ -195,7 +195,7 @@ def fomc_dates():
             for i in range(1, len(parts), 2):
                 y = int(parts[i]); body = parts[i + 1]
                 for mo, dd in re.findall(r'fomc-meeting__month[^>]*>\s*<strong>([A-Za-z/]+)</strong>.*?fomc-meeting__date[^>]*>([^<]+)<', body, flags=re.S):
-                    if "*" in dd and "notation" in dd.lower():
+                    if "notation" in dd.lower() or "unscheduled" in dd.lower():
                         continue
                     d2 = re.findall(r"\d+", dd)
                     if not d2:
@@ -210,13 +210,15 @@ def fomc_dates():
                         pass
         else:
             y = int(re.findall(r"fomc_(\d{4})", f)[0])
-            for mname, d1, d2 in re.findall(r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})(?:-(\d{1,2}))?\s+Meeting", html):
+            for m1, m2, d1, d2 in re.findall(r"\b([A-Z][a-z]+)(?:/([A-Z][a-z]+))?\s+(\d{1,2})(?:-(\d{1,2}))?\s+Meeting", html):
+                mname = (m2 or m1)[:3]
+                mm = [v for k, v in months.items() if k[:3] == mname]
+                if not mm:
+                    continue
                 try:
-                    out.add(pd.Timestamp(y, months[mname], int(d2 or d1)).date())
+                    out.add(pd.Timestamp(y, mm[0], int(d2 or d1)).date())
                 except ValueError:
                     pass
-            for m1, d1, m2, d2 in re.findall(r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})-(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})\s+Meeting", html):
-                out.add(pd.Timestamp(y, months[m2], int(d2)).date())
     return sorted(out)
 
 

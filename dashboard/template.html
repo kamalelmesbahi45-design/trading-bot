@@ -442,7 +442,8 @@ function viewMethod() {
 const IN = (D && D.intraday) || null;
 const ST = {"IN TRADE": ["#0f2c1b", "var(--up)"], "ORDERS": ["#13233d", "var(--blue)"], "WATCHING": ["#13233d", "var(--blue)"],
   "WAITING": ["#1b2531", "var(--muted)"], "DONE": ["#1b2531", "var(--text)"], "NO TRADE": ["#1b2531", "var(--dim)"],
-  "CLOSED": ["#1b2531", "var(--dim)"], "NO DATA": ["#2a1d0b", "var(--amber)"], "ERROR": ["#3a1518", "var(--down)"]};
+  "CLOSED": ["#1b2531", "var(--dim)"], "NO DATA": ["#2a1d0b", "var(--amber)"], "ERROR": ["#3a1518", "var(--down)"],
+  "UPCOMING": ["#241a3d", "var(--violet)"], "NOT TODAY": ["#151c26", "var(--dim)"]};
 const stTag = s => { const c = ST[s] || ST.WAITING; return `<span style="background:${c[0]};color:${c[1]};border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:700;white-space:nowrap">${esc(s)}</span>`; };
 const TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return "local"; } })();
 const lt = iso => { if (!iso) return "—"; const d = new Date(iso); return isNaN(d) ? "—" : d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}); };
@@ -480,6 +481,7 @@ function dayRisk(s) {   // distance used for sizing before / during the trade
   if (t && t.entry != null && t.stop != null) return [t.entry, t.stop];
   if (s.kind === "london" || s.kind === "orb") { const side = p.long || p.short; return side ? [side.entry, side.stop] : null; }
   if (s.kind === "bigmove" && p.long) { const pc = s.levels.find(l => l[0] === "Previous close"); if (!pc) return null; const e = p.long.trigger; return [e, e - (e - pc[1]) / 2]; }
+  if ((s.kind === "monthend" || s.kind === "fomc") && p.risk) return [10000, 10000 - p.risk];
   if (s.kind === "noise" && s.bands && s.bands.length) { const op = s.levels.find(l => l[0] === "Open"); return op ? [s.bands[0].up, op[1]] : null; }
   return null;
 }
@@ -505,6 +507,10 @@ function dayCard(s, full) {
   }
   const rk = dayRisk(s);
   const size = rk ? `<div class="muted" style="font-size:12.5px;margin-top:6px">Size at ${nf(ACC.risk_day, 2)}% risk: <b style="color:var(--text)">${sizeText(s.market, rk[0], rk[1], ACC.risk_day)}</b> <span class="dim">(stop distance ${nf(Math.abs(rk[0] - rk[1]), nd)})</span></div>` : "";
+  const rg = s.regime;
+  const regime = rg ? `<div class="kv" style="margin-top:8px;border-color:${rg.skip ? "#5b4511" : rg.on ? "#1f5134" : "var(--line)"}"><div class="k">Regime · ${esc(rg.factor)} (as of ${esc(rg.asof)})</div>
+    <div class="v" style="font-size:12.5px">${esc(rg.value)} → <b>${esc(rg.label)}</b>. In this regime: P(win) <b class="mono">${pct0(rg.hit)}</b>, ${R(rg.meanR)} (n=${rg.n}); other regime ${pct0(rg.other.hit)}, ${R(rg.other.meanR)}.
+    ${rg.skip ? '<br><span class="amb">No edge in this regime: skip or quarter size.</span>' : ""}${rg.note ? `<br><span class="dim">${esc(rg.note)}</span>` : ""}</div></div>` : "";
   const times = Object.entries(s.times || {}).map(([k, v]) => `<span class="tag">${esc(k.replace("_", " "))} ${lt(v)}</span>`).join(" ");
   const lv = (s.levels || []).map(([k, v]) => `<tr><td class="l">${esc(k)}</td><td class="mono">${typeof v === "number" ? nf(v, nd) : esc(v)}</td></tr>`).join("");
   let bands = "";
@@ -514,7 +520,9 @@ function dayCard(s, full) {
       <div class="row" style="gap:6px">${stTag(s.status)} ${evTag(s.evidence)}</div></div>
     <div style="margin-top:8px">${esc(s.status_text || "")}</div>
     ${trade}
+    ${regime}
     ${lv ? `<table style="margin-top:8px"><tbody>${lv}</tbody></table>` : ""}
+    ${full && s.alt ? `<div class="dim" style="font-size:12px;margin-top:6px">${esc(s.alt)}</div>` : ""}
     ${size}
     <div class="row" style="margin-top:8px;gap:6px">${times}</div>
     ${full ? edgeLine(s.stats) : ""}
@@ -538,11 +546,21 @@ function dayLogCard() {
   return `<div class="card tw"><table><thead><tr><th class="l">System</th><th>Trades</th><th>Hit</th><th>Avg</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
   <details style="margin-top:8px"><summary>Last trades</summary><table><tbody>${L.slice(-20).reverse().map(r => `<tr><td class="l mono">${esc(r.day)}</td><td class="l">${esc(r.system)}</td><td>${esc(r.dir)}</td><td class="mono">${R(+r.R)}</td><td class="l">${esc(r.outcome)}</td></tr>`).join("")}</tbody></table></details></div>`;
 }
+function contextPanel() {
+  if (!IN) return "";
+  const c = IN.context || {}, ev = IN.events || [];
+  const vc = c.vix_curve, gx = c.gex;
+  const vtxt = vc ? `VIX ${nf(vc.vix, 1)} / VIX3M ${nf(vc.vix3m, 1)} = <b class="mono ${vc.ratio >= 1 ? "down" : "up"}">${nf(vc.ratio, 2)}</b> ${vc.ratio >= 1 ? "inverted: stress, big-move systems strongest" : "normal"} <span class="dim">(${esc(vc.asof)})</span>` : "—";
+  const gtxt = gx ? `<b class="mono ${gx.value < gx.median ? "amb" : ""}">${nf(gx.value, 2)}bn</b> vs 1-year median ${nf(gx.median, 2)}bn → ${gx.value < gx.median ? "low gamma: moves travel further" : "high gamma: dealers dampen moves"} <span class="dim">(${esc(gx.asof)})</span>` : "—";
+  return `<div class="grid g2" style="margin-bottom:12px"><div class="card"><h3>Market drivers today</h3>
+    <div style="font-size:13px;line-height:1.7"><div><span class="muted">VIX curve:</span> ${vtxt}</div><div><span class="muted">Dealer gamma (GEX):</span> ${gtxt}</div></div></div>
+    <div class="card"><h3>Event calendar</h3><table><tbody>${ev.map(e => `<tr><td class="l mono">${esc(e.date)}</td><td class="l" style="white-space:normal">${esc(e.what)}</td><td>${e.edge === "-" ? '<span class="dim">info</span>' : evTag(e.edge === "B" ? "B" : "Candidate")}</td></tr>`).join("")}</tbody></table></div></div>`;
+}
 function viewDay() {
   if (!IN) { $("#view").innerHTML = acctBar() + dayFreshness(); bindAcct(viewDay); return; }
-  const order = {"IN TRADE": 0, "ORDERS": 1, "WATCHING": 1, "WAITING": 2, "DONE": 3, "NO TRADE": 4, "NO DATA": 5, "CLOSED": 6, "ERROR": 7};
+  const order = {"IN TRADE": 0, "ORDERS": 1, "WATCHING": 1, "WAITING": 2, "UPCOMING": 2.5, "DONE": 3, "NO TRADE": 4, "NO DATA": 5, "CLOSED": 6, "NOT TODAY": 6.5, "ERROR": 7};
   const sys = [...IN.systems].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
-  let h = acctBar() + dayFreshness();
+  let h = acctBar() + dayFreshness() + contextPanel();
   h += `<div class="grid g2">${sys.map(s => dayCard(s, true)).join("")}</div>`;
   h += `<div class="sec">Live track record (day trades)</div>` + dayLogCard();
   h += `<div class="card" style="margin-top:12px;font-size:13px"><b>How to use it.</b> Grade <b>B</b> systems passed significance and stayed positive after 2022; grade <b>C</b> ones are positive in every period but not proven — paper-trade them first.
@@ -564,7 +582,7 @@ function viewDay() {
 }
 function daySummary() {
   if (!IN) return `<div class="sec">Day trading today</div>` + dayFreshness();
-  const order = {"IN TRADE": 0, "ORDERS": 1, "WATCHING": 1, "WAITING": 2, "DONE": 3, "NO TRADE": 4, "NO DATA": 5, "CLOSED": 6, "ERROR": 7};
+  const order = {"IN TRADE": 0, "ORDERS": 1, "WATCHING": 1, "WAITING": 2, "UPCOMING": 2.5, "DONE": 3, "NO TRADE": 4, "NO DATA": 5, "CLOSED": 6, "NOT TODAY": 6.5, "ERROR": 7};
   const cards = [...IN.systems].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9)).map(s => {
     const lv = (s.levels || []).filter(l => typeof l[1] === "number").slice(0, 3).map(l => `<div class="row" style="justify-content:space-between;font-size:12px"><span class="muted">${esc(l[0].split(" (")[0])}</span><b class="mono">${nf(l[1], s.nd ?? 2)}</b></div>`).join("");
     const t = s.trade;
@@ -575,7 +593,7 @@ function daySummary() {
       <div style="margin-top:6px">${lv}</div>
       <div class="muted mono" style="font-size:11.5px;margin-top:6px">P(win) ${pct0(s.stats.hit)} · exp ${R(s.stats.meanR, 3)} · ${nf(s.stats.per_year, 0)}/yr</div></div>`;
   }).join("");
-  return `<div class="sec">Day trading today</div>${dayFreshness()}<div class="grid g3">${cards}</div>`;
+  return `<div class="sec">Day trading today</div>${dayFreshness()}${contextPanel()}<div class="grid g3">${cards}</div>`;
 }
 
 // ------------------------------------------------------------------ router

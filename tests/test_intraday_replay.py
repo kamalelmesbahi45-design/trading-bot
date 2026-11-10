@@ -17,6 +17,8 @@ REF = {"LDN_JPY": f"{R1}/trades_LONDON__USDJPY__stop_mode-opp_target_mode-EOD_tr
 END = {"LDN_JPY": "17:05", "ORB_DAX": "17:35", "NOISE_NAS": "16:05", "BIG_NAS": "16:05", "BIG_SPX": "16:05", "BIG_XAU": "16:05"}
 ok_all = True
 for S in I.SYSTEMS:
+    if S["id"] not in REF:          # month-end / FOMC are checked in daytrade/research6 (calendar trades)
+        continue
     m5 = pd.read_parquet(f"{M5}/{FILES[S['yf']]}_m5.parquet").astype(float)
     m5.index = m5.index.tz_convert("UTC")
     ref = pd.read_csv(REF[S["id"]], parse_dates=["day"])

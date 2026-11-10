@@ -19,3 +19,13 @@ Run: `M5_DIR=m5 python daytrade/research.py out1` then `R1=out1/results.csv pyth
 * Round 4 (`research4.py`): literature hypothesis "big-move day continues into the close" (Gao et al. 2018,
   Baltussen et al. 2021), 360 tests. **0 pass FDR 5%**, but US indices at 13:30 New York are positive in all
   three periods: NAS100 |z|>=2 -> 18 trades/yr, hit 62%, +18 bp net/trade (t=2.9). Best candidate, not proven.
+
+## Round 6 — market drivers (`research6_factors.py`, 45 pre-declared tests, FDR 10%)
+* **VIX curve inverted (VIX/VIX3M >= 1, known the evening before)** makes the US big-move continuation much stronger:
+  S&P k=2 +0.40R / hit 67% (vs +0.01R / 49% when the curve is normal), Nasdaq k=2 +0.39R / 71% (vs +0.04R / 59%).
+  Positive in all three periods. Live engine: S&P big-move is skipped when the curve is normal.
+* **Low dealer gamma (GEX)** helps the Nasdaq noise band (+0.18R vs -0.01R) but the gap is mostly 2014-19.
+* **Month-end pension rebalancing** (last US trading day, trade against stocks-minus-bonds month-to-date, 09:30->16:00,
+  1 ATR stop): S&P 500 152 trades, hit 59%, +0.13R, positive in all periods (live-data version). New system ME_SPX.
+* Pre-FOMC drift: Nasdaq +0.09R with stop, ~0 in 2014-19 -> candidate only. FX month-end fix, OPEX week,
+  overnight drift: no edge after costs.
