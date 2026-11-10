@@ -37,6 +37,20 @@ def load_market(m: dict, source: str, local_dir: str | None):
         used = "GitHub mirror dataset" if df is not None else None
     if df is None:
         return None, None
+    # never trade off an unfinished candle: drop any bar dated today (UTC)
+    today = pd.Timestamp(dt.datetime.now(dt.timezone.utc).date())
+    df = df[df.index < today]
+    if m["cls"] == "FX major":
+        # spot FX trades ~24h: Yahoo's daily open is a snapshot from another time stamp, which
+        # creates fake gaps. Standard cleaning: open = previous close (except after weekends).
+        prev = df["Close"].shift()
+        wk = (df.index.to_series().diff().dt.days <= 1).values
+        df = df.copy()
+        df.loc[wk, "Open"] = prev[wk]
+        df["High"] = df[["Open", "High", "Close"]].max(axis=1)
+        df["Low"] = df[["Open", "Low", "Close"]].min(axis=1)
+    if len(df) == 0:
+        return None, None
     start = df.index[-1] - pd.Timedelta(days=int(365.25 * C.HISTORY_YEARS))
     return df[df.index >= start], used
 
@@ -127,7 +141,7 @@ def analyse_market(m: dict, df: pd.DataFrame, used: str, macro_scores: dict, int
         tr_ = df.tail(500)
         rr = ((tr_.High - tr_.Low) / (tr_.High - tr_.Low).rolling(14).mean()).median()
         gap = ((tr_.Open - tr_.Close.shift()).abs() / (tr_.High - tr_.Low).rolling(14).mean()).median()
-        if gap > 0.35:
+        if gap > 0.35 and m["cls"] not in ("Equity index", "Rates"):   # index overnight gaps are real
             quality.append(f"Large open-vs-previous-close gaps (median {gap:.2f}x avg range): feed mixes sessions or "
                            "futures rolls -> backtest fills are less reliable")
     else:

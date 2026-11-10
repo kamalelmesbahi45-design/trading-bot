@@ -113,17 +113,19 @@ def load_yahoo_intraday(ticker: str) -> pd.DataFrame | None:
 
 
 # --------------------------------------------------------------------------- FRED
-def load_fred(series: str) -> pd.Series | None:
-    try:
-        r = _get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}")
-        df = pd.read_csv(io.StringIO(r.text))
-        df.columns = ["date", "value"]
-        s = pd.to_numeric(df["value"], errors="coerce")
-        s.index = pd.to_datetime(df["date"])
-        return s.dropna()
-    except Exception as e:
-        _err(f"fred {series}: {e}")
-        return None
+def load_fred(series: str, tries: int = 2) -> pd.Series | None:
+    start = (dt.date.today() - dt.timedelta(days=3 * 365)).isoformat()
+    for k in range(tries):
+        try:
+            r = _get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start}", timeout=60)
+            df = pd.read_csv(io.StringIO(r.text))
+            df.columns = ["date", "value"]
+            s = pd.to_numeric(df["value"], errors="coerce")
+            s.index = pd.to_datetime(df["date"])
+            return s.dropna()
+        except Exception as e:
+            _err(f"fred {series} try {k + 1}: {e}")
+    return None
 
 
 # --------------------------------------------------------------------------- CFTC COT

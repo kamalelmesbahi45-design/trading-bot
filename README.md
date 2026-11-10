@@ -11,7 +11,7 @@ target, time-stop, probability, expectancy, position size and the reasons behind
 2. **Settings → Pages** → Source: *Deploy from a branch* → Branch: the default branch (here `claude/xauusd-trader-bot-40k3ak`), folder `/docs` → Save.
 3. **Settings → Actions → General** → Workflow permissions: *Read and write* → Save.
 4. **Actions → daily-edge-run → Run workflow** (awel merra b yeddek). Men b3d kaykhdem bohdo:
-   22:17 UTC (mor ma ysed l'marché l'amériki) w 06:17 UTC (9bel London).
+   00:20 UTC (mor ma ysedo ga3 les bougies dyal l'bareh) w 06:20 UTC (9bel London).
 5. Dashboard dyalek ghadi ykoun f: `https://kamalelmesbahi45-design.github.io/trading-bot/`
 
 L'code l'9dim mkhbi f branch `backup/old-trading-bot`.

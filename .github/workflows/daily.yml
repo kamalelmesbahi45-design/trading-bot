@@ -1,8 +1,8 @@
 name: daily-edge-run
 on:
   schedule:
-    - cron: "17 22 * * 0-4"   # after the US close, Sun-Thu (signals for the next session)
-    - cron: "17 6 * * 1-5"    # morning refresh before London (crypto, Asia, calendar)
+    - cron: "20 0 * * *"      # 00:20 UTC: every market's previous daily candle is complete
+    - cron: "20 6 * * 1-5"    # 06:20 UTC: morning refresh/retry before London (calendar, data fixes)
   workflow_dispatch: {}        # "Run workflow" button for a manual refresh
 permissions:
   contents: write
