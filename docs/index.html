@@ -559,7 +559,7 @@ function contextPanel() {
   const vc = c.vix_curve, gx = c.gex;
   const vtxt = vc ? `VIX ${nf(vc.vix, 1)} / VIX3M ${nf(vc.vix3m, 1)} = <b class="mono ${vc.ratio >= 1 ? "down" : "up"}">${nf(vc.ratio, 2)}</b> ${vc.ratio >= 1 ? "inverted: stress, big-move systems strongest" : "normal"} <span class="dim">(${esc(vc.asof)})</span>` : "—";
   const gtxt = gx ? `<b class="mono ${gx.value < gx.median ? "amb" : ""}">${nf(gx.value, 2)}bn</b> vs 1-year median ${nf(gx.median, 2)}bn → ${gx.value < gx.median ? "low gamma: moves travel further" : "high gamma: dealers dampen moves"} <span class="dim">(${esc(gx.asof)})</span>` : "—";
-  return `<div class="grid g2" style="margin-bottom:12px"><div class="card"><h3>Market drivers today</h3>
+  return `<div class="grid g2" style="margin-bottom:12px"><div class="card"><h3>Market drivers today</h3><div class="dim" style="font-size:11.5px;margin:-4px 0 6px">Latest values (may be intraday). Each system's regime uses the previous close, exactly as in the research.</div>
     <div style="font-size:13px;line-height:1.7"><div><span class="muted">VIX curve:</span> ${vtxt}</div><div><span class="muted">Dealer gamma (GEX):</span> ${gtxt}</div></div></div>
     <div class="card"><h3>Event calendar</h3><table><tbody>${ev.map(e => `<tr><td class="l mono">${esc(e.date)}</td><td class="l" style="white-space:normal">${esc(e.what)}</td><td>${e.edge === "-" ? '<span class="dim">info</span>' : evTag(e.edge === "B" ? "B" : "Candidate")}</td></tr>`).join("")}</tbody></table></div></div>`;
 }
