@@ -1,0 +1,64 @@
+name: intraday-data
+# Downloads Dukascopy 1-minute history (free) for the day-trading universe, builds UTC M5 bars
+# and stores them as parquet on the `intraday-data` branch. Manual trigger; refresh weekly.
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "41 3 * * 6"     # Saturday: append the latest week
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        inst: [usatechidxusd, usa500idxusd, deuidxeur, xauusd, eurusd, gbpusd, usdjpy, btcusd]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pandas pyarrow
+      - run: npx -y dukascopy-node@1.51.1 --install-browser || true
+      - name: Download M1 year by year
+        run: |
+          mkdir -p raw
+          START=2014; [ "${{ matrix.inst }}" = "btcusd" ] && START=2017
+          END=$(date -u +%Y)
+          for Y in $(seq $START $END); do
+            TO="$((Y+1))-01-01"; [ "$Y" = "$END" ] && TO=now
+            for attempt in 1 2 3; do
+              npx -y dukascopy-node@1.51.1 -i ${{ matrix.inst }} -from $Y-01-01 -to $TO -t m1 -f csv \
+                 -dir raw -fn ${{ matrix.inst }}_$Y -r 5 -rp 2000 -bs 8 -bp 800 -fr -s && break
+              echo "retry $Y ($attempt)"; sleep 20
+            done
+            ls -la raw | tail -1
+          done
+      - run: python daytrade/build_m5.py ${{ matrix.inst }} raw out/${{ matrix.inst }}_m5.parquet
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m5-${{ matrix.inst }}
+          path: out/${{ matrix.inst }}_m5.parquet
+          retention-days: 7
+  commit:
+    needs: fetch
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: art, pattern: m5-*, merge-multiple: true }
+      - name: Push to intraday-data branch
+        run: |
+          ls -la art
+          git init -q repo && cd repo
+          git config user.name "edge-bot"; git config user.email "edge-bot@users.noreply.github.com"
+          git remote add origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+          git checkout -q --orphan intraday-data
+          mkdir -p m5 && cp ../art/*.parquet m5/
+          echo "Dukascopy bid M5 bars (UTC), built $(date -u +'%F %T')" > README.md
+          git add -A && git commit -q -m "intraday data $(date -u +%F)"
+          git push -f origin intraday-data
