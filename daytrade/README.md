@@ -29,3 +29,12 @@ Run: `M5_DIR=m5 python daytrade/research.py out1` then `R1=out1/results.csv pyth
   1 ATR stop): S&P 500 152 trades, hit 59%, +0.13R, positive in all periods (live-data version). New system ME_SPX.
 * Pre-FOMC drift: Nasdaq +0.09R with stop, ~0 in 2014-19 -> candidate only. FX month-end fix, OPEX week,
   overnight drift: no edge after costs.
+
+## Round 7 — hypotheses from the literature review (`research7_literature.py`, 39 FDR-counted tests)
+Only **1 passes FDR 10%**: on the S&P 13:30 big-move trade (k=1), prior-day GEX in its bottom 1-year quintile gives
++0.14R vs -0.04R otherwise — but negative in 2023-26, so it is used as context only.
+Candidates (positive, not proven): month-end calendar rebalancing over the last 4 days + first-day reversal
+(S&P +8.6 bp/day t=2.3, Nasdaq +11.5 bp/day t=2.4; flat 2020-22); high-VIX reversal on Nasdaq (32 trades since 2008,
+hit 84%, +0.23R); VIX-curve normalisation (33 trades, +0.26 to +0.40R); slow EWMAC trend on gold (Sharpe 0.6) and Nasdaq (0.6).
+Failed: rebalancing threshold signal, positive-gamma intraday fade (negative), post-FOMC Treasury drift, dash-for-cash,
+low-vol filter on 55d breakouts, slow trend on FX majors, WTI and the T-bond (contrary to the large-tick hypothesis).
