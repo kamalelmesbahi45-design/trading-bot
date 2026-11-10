@@ -21,11 +21,13 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: python tests/test_engine.py
+      - run: python tests/test_intraday_units.py
       - run: python run.py --source auto
       - name: Commit dashboard + data
         run: |
           git config user.name  "edge-bot"
           git config user.email "edge-bot@users.noreply.github.com"
           git add docs/index.html data/
-          git commit -m "daily run $(date -u +'%Y-%m-%d %H:%M') UTC" || echo "nothing to commit"
-          git push
+          git commit -m "daily run $(date -u +'%Y-%m-%d %H:%M') UTC" || exit 0
+          for i in 1 2 3; do git pull -q --rebase origin "$GITHUB_REF_NAME" && git push -q && exit 0; sleep 5; done
+          exit 1

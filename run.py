@@ -19,6 +19,12 @@ doc = build(a.source, a.local, intraday=not a.no_intraday)
 os.makedirs("data", exist_ok=True); os.makedirs("docs", exist_ok=True)
 with open("data/latest.json", "w") as fh:
     json.dump(doc, fh, separators=(",", ":"))
+if os.path.exists("data/intraday.json"):           # keep the latest day-trading plan on the page
+    doc["intraday"] = json.load(open("data/intraday.json"))
+if os.path.exists("data/daytrade_log.csv"):
+    import csv
+    with open("data/daytrade_log.csv") as fh:
+        doc["daytrade_log"] = list(csv.DictReader(fh))[-200:]
 render(doc, "docs/index.html")
 if doc["source"] != "mirror":          # only live runs feed the forward track record
     journal.append(doc["signals"])

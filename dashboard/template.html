@@ -82,7 +82,8 @@ footer{margin-top:30px;color:var(--dim);font-size:12px;border-top:1px solid var(
 </header>
 <nav id="nav">
   <a href="#today" data-v="today">Today</a>
-  <a href="#markets" data-v="markets">Markets</a>
+  <a href="#day" data-v="day">Day trading</a>
+  <a href="#markets" data-v="markets">Swing markets</a>
   <a href="#macro" data-v="macro">Macro</a>
   <a href="#lab" data-v="lab">Edge Lab</a>
   <a href="#method" data-v="method">Method</a>
@@ -123,7 +124,8 @@ function header() {
     <span class="pill">Run <b class="mono">${esc(D.generated_at)}</b></span>
     <span class="pill">Macro <b class="${regCls}">${esc(reg)}</b></span>
     <span class="pill">Markets <b>${D.markets.length}/${D.universe.length}</b></span>
-    <span class="pill">Tradeable signals <b>${act}</b></span>
+    <span class="pill">Swing signals <b>${act}</b></span>
+    <span class="pill">Day trades now <b>${(D.intraday?.systems || []).filter(x => ["IN TRADE", "ORDERS", "WATCHING"].includes(x.status)).length}</b></span>
     <span class="pill">Edges passing FDR <b>${D.tests.fdr_pass}/${D.tests.n}</b></span>`;
   if (D.snapshot) {
     $("#banner").innerHTML = `<div class="banner"><b>${D.source === "mirror" ? "Demo snapshot." : "Fallback data in use."}</b> ${D.source === "mirror" ? "Built" : "Some markets are built"} on real but <b>delayed</b> public datasets mirrored on GitHub (the live feed was not reachable).
@@ -170,7 +172,7 @@ function signalCard(s) {
       <div class="kv"><div class="k">Target (+${nf(s.rr, 1)}R)</div><div class="v up">${px(s.target, m)}</div></div>
       <div class="kv"><div class="k">Time stop</div><div class="v">${esc(s.time_stop)}</div></div>
       <div class="kv"><div class="k">Expectancy</div><div class="v">${R(s.exp_R)}</div></div>
-      <div class="kv"><div class="k">Risk / units per $10k</div><div class="v">${tradeable ? `${nf(s.risk_pct, 2)}% · ${nf(s.units_per_10k, s.entry < 10 ? 0 : 3)}` : "0 · watch"}</div></div>
+      <div class="kv"><div class="k">Size at ${nf(ACC.risk_swing, 2)}%</div><div class="v" style="font-size:12.5px">${tradeable ? sizeText(s.name, s.entry, s.stop, ACC.risk_swing) : "watch only"}</div></div>
     </div>
     ${probBar(s.prob, s.p_be)}
     <div class="muted" style="font-size:12px;margin-top:6px">${esc(GRADE_TXT[s.grade])} · n=${s.n ?? "—"} · bias ${s.bias > 0 ? "+" : ""}${nf(s.bias, 0)} ${s.bias_aligned ? '<span class="up">aligned</span>' : '<span class="amb">against bias</span>'}</div>
@@ -204,7 +206,7 @@ function viewToday() {
   const wt = D.signals.filter(s => s.grade === "C");
   const nx = D.signals.filter(s => s.grade === "X");
   const wl = watchlist();
-  let h = `<div class="sec">Tradeable signals (grade A/B)</div>`;
+  let h = acctBar() + daySummary() + `<div class="sec">Swing signals (daily bars) — tradeable, grade A/B</div>`;
   h += tr.length ? `<div class="grid g2">${tr.map(signalCard).join("")}</div>`
     : `<div class="card empty">No setup with a proven edge triggered on the latest bar. <b>No trade is a position</b> — the edge comes from only pulling the trigger when the statistics are on your side.</div>`;
   if (D.clusters?.length) h += `<div class="card" style="margin-top:12px"><b class="amb">Same-bet warning:</b> ${D.clusters.map(c => `${esc(c.a)} & ${esc(c.b)} (ρ=${c.corr})`).join(", ")} move together — treat them as one position for risk.</div>`;
@@ -229,6 +231,7 @@ function viewToday() {
     }).join("")}</tbody></table><div class="muted" style="font-size:12px;margin-top:6px">Day-trading rule: no new entries 15 min before/after a high-impact release in that currency; widen or reduce size on swing positions.</div></div>`
     : `<div class="card empty">${D.source === "mirror" ? "Economic calendar is fetched in the live GitHub run." : "No high-impact events found."}</div>`;
   $("#view").innerHTML = h;
+  bindAcct(viewToday);
 }
 
 // ------------------------------------------------------------------ MARKETS
@@ -435,13 +438,153 @@ function viewMethod() {
   </div>`;
 }
 
+// ------------------------------------------------------------------ DAY TRADING
+const IN = (D && D.intraday) || null;
+const ST = {"IN TRADE": ["#0f2c1b", "var(--up)"], "ORDERS": ["#13233d", "var(--blue)"], "WATCHING": ["#13233d", "var(--blue)"],
+  "WAITING": ["#1b2531", "var(--muted)"], "DONE": ["#1b2531", "var(--text)"], "NO TRADE": ["#1b2531", "var(--dim)"],
+  "CLOSED": ["#1b2531", "var(--dim)"], "NO DATA": ["#2a1d0b", "var(--amber)"], "ERROR": ["#3a1518", "var(--down)"]};
+const stTag = s => { const c = ST[s] || ST.WAITING; return `<span style="background:${c[0]};color:${c[1]};border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:700;white-space:nowrap">${esc(s)}</span>`; };
+const TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return "local"; } })();
+const lt = iso => { if (!iso) return "—"; const d = new Date(iso); return isNaN(d) ? "—" : d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}); };
+const ACC = (() => { let a = {size: 100000, risk_day: 0.5, risk_swing: 0.5}; try { const s = JSON.parse(localStorage.getItem("edge_acct") || "null"); if (s) a = {...a, ...s}; } catch (e) {} return a; })();
+function saveAcc() { try { localStorage.setItem("edge_acct", JSON.stringify(ACC)); } catch (e) {} }
+function acctBar() {
+  return `<div class="card" id="acct"><div class="row" style="gap:14px;align-items:flex-end">
+    <label style="font-size:12px" class="muted">Account size ($)<br><input id="acc_size" type="number" min="0" step="1000" value="${ACC.size}" style="width:130px;background:#0e141c;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px"></label>
+    <label style="font-size:12px" class="muted">Risk per day trade (%)<br><input id="acc_rd" type="number" min="0" max="2" step="0.05" value="${ACC.risk_day}" style="width:90px;background:#0e141c;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px"></label>
+    <label style="font-size:12px" class="muted">Risk per swing trade (%)<br><input id="acc_rs" type="number" min="0" max="2" step="0.05" value="${ACC.risk_swing}" style="width:90px;background:#0e141c;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px"></label>
+    <div class="muted" style="font-size:12px;max-width:440px">Prop-firm plan from the research: 0.5% per trade, cut risk in half below −4%, stop for the day at −3%. Sizes below update from these numbers. Times are shown in your time zone (${esc(TZ)}).</div></div></div>`;
+}
+function bindAcct(rerender) {
+  const f = () => { ACC.size = +$("#acc_size").value || 0; ACC.risk_day = +$("#acc_rd").value || 0; ACC.risk_swing = +$("#acc_rs").value || 0; saveAcc(); rerender(); };
+  ["#acc_size", "#acc_rd", "#acc_rs"].forEach(id => { const el = $(id); if (el) el.addEventListener("change", f); });
+}
+function sizeText(market, entry, stop, riskPct) {
+  const dist = Math.abs(entry - stop); if (!dist || !entry) return "—";
+  const usd = ACC.size * riskPct / 100;
+  const fx = /^([A-Z]{3})\/([A-Z]{3})$/.exec(market || "");
+  if (fx) {   // units of the base currency
+    const u = fx[2] === "USD" ? usd / dist : fx[1] === "USD" ? usd * entry / dist : usd / dist;
+    return `${nf(u / 1e5, 2)} lots <span class="dim">(${nf(u, 0)} units)</span>`;
+  }
+  if (market === "Gold") { const oz = usd / dist; return `${nf(oz / 100, 2)} lots <span class="dim">(${nf(oz, 1)} oz)</span>`; }
+  if (market === "Silver") { const oz = usd / dist; return `${nf(oz / 5000, 2)} lots <span class="dim">(${nf(oz, 0)} oz)</span>`; }
+  if (market === "WTI Crude Oil") { const b = usd / dist; return `${nf(b / 1000, 2)} lots <span class="dim">(${nf(b, 0)} barrels)</span>`; }
+  if (market === "Bitcoin" || market === "Ethereum") return `${nf(usd / dist, 4)} coins`;
+  if (market === "DAX 40") return `€${nf(usd / dist, 2)} per point <span class="dim">(risk ≈ $${nf(usd, 0)})</span>`;
+  if (/yield/i.test(market || "")) return `$${nf(usd, 0)} risk on a ${nf(dist, 3)} yield move`;
+  return `$${nf(usd / dist, 2)} per point`;
+}
+function dayRisk(s) {   // distance used for sizing before / during the trade
+  const t = s.trade, p = s.plan || {};
+  if (t && t.entry != null && t.stop != null) return [t.entry, t.stop];
+  if (s.kind === "london" || s.kind === "orb") { const side = p.long || p.short; return side ? [side.entry, side.stop] : null; }
+  if (s.kind === "bigmove" && p.long) { const pc = s.levels.find(l => l[0] === "Previous close"); if (!pc) return null; const e = p.long.trigger; return [e, e - (e - pc[1]) / 2]; }
+  if (s.kind === "noise" && s.bands && s.bands.length) { const op = s.levels.find(l => l[0] === "Open"); return op ? [s.bands[0].up, op[1]] : null; }
+  return null;
+}
+function edgeLine(st) {
+  const be = Math.abs(st.avg_loss) / (st.avg_win + Math.abs(st.avg_loss));
+  return `<div class="plan mono" style="margin:8px 0">
+    <div class="kv"><div class="k">P(win)</div><div class="v">${pct0(st.hit)}</div></div>
+    <div class="kv"><div class="k">Avg win / loss</div><div class="v" style="font-size:12.5px">+${nf(st.avg_win, 2)}R / ${nf(st.avg_loss, 2)}R</div></div>
+    <div class="kv"><div class="k">Expectancy</div><div class="v">${R(st.meanR, 3)}</div></div>
+    <div class="kv"><div class="k">Since 2022</div><div class="v">${R(st.oos, 3)}</div></div>
+    <div class="kv"><div class="k">Trades / year</div><div class="v">${nf(st.per_year, 0)}</div></div>
+    <div class="kv"><div class="k">Positive years</div><div class="v">${esc(st.pos_years)}</div></div></div>
+    <div class="pbar"><div class="fill" style="width:${st.hit * 100}%;background:${st.hit > be ? "var(--up)" : "var(--amber)"}"></div><div class="be" style="left:${be * 100}%"></div></div>
+    <div class="row muted" style="font-size:11.5px;justify-content:space-between"><span>P(win) <b class="mono" style="color:var(--text)">${pct0(st.hit)}</b></span><span>break-even ${pct0(be)} ▏</span></div>`;
+}
+function evTag(e) { return e === "B" ? `<span class="badge gB" title="p<0.05, positive out-of-sample, not FDR-proof">B</span>` : `<span class="badge gC" title="Positive in all periods but not statistically proven: paper-trade first">C</span>`; }
+function dayCard(s, full) {
+  const nd = s.nd ?? 2, t = s.trade;
+  let trade = "";
+  if (t) {
+    if (t.state === "OPEN") trade = `<div class="kv" style="margin-top:8px;border-color:#1f5134"><div class="k">Open trade</div><div class="v mono"><span class="${t.dir === "LONG" ? "long" : "short"}">${esc(t.dir)}</span> @ ${nf(t.entry, nd)} · stop ${nf(t.stop, nd)} · now ${nf(t.last, nd)} (${R(t.R_now)}) · since ${lt(t.entry_time)}</div></div>`;
+    else trade = `<div class="kv" style="margin-top:8px"><div class="k">Today's result</div><div class="v mono">${t.dir ? `<span class="${t.dir === "LONG" ? "long" : "short"}">${esc(t.dir)}</span> ${nf(t.entry, nd)} → ${nf(t.exit, nd)} · ` : ""}${esc(t.outcome || "")} · ${R(t.R)}</div></div>`;
+  }
+  const rk = dayRisk(s);
+  const size = rk ? `<div class="muted" style="font-size:12.5px;margin-top:6px">Size at ${nf(ACC.risk_day, 2)}% risk: <b style="color:var(--text)">${sizeText(s.market, rk[0], rk[1], ACC.risk_day)}</b> <span class="dim">(stop distance ${nf(Math.abs(rk[0] - rk[1]), nd)})</span></div>` : "";
+  const times = Object.entries(s.times || {}).map(([k, v]) => `<span class="tag">${esc(k.replace("_", " "))} ${lt(v)}</span>`).join(" ");
+  const lv = (s.levels || []).map(([k, v]) => `<tr><td class="l">${esc(k)}</td><td class="mono">${typeof v === "number" ? nf(v, nd) : esc(v)}</td></tr>`).join("");
+  let bands = "";
+  if (full && s.bands) bands = `<details style="margin-top:8px"><summary>Band levels at each check</summary><table><thead><tr><th class="l">Check (your time)</th><th>Long above</th><th>Short below</th></tr></thead><tbody>${s.bands.map(b => `<tr><td class="l mono">${lt(b.t)}</td><td class="mono">${nf(b.up, nd)}</td><td class="mono">${nf(b.dn, nd)}</td></tr>`).join("")}</tbody></table></details>`;
+  return `<div class="card" id="day-${esc(s.id)}">
+    <div class="sig-head"><div><div class="sig-title">${esc(s.name)}</div><div class="muted" style="font-size:12.5px">${esc(s.market)} · ${esc(s.day)}${s.trend ? ` · daily trend ${esc(s.trend)}` : ""}</div></div>
+      <div class="row" style="gap:6px">${stTag(s.status)} ${evTag(s.evidence)}</div></div>
+    <div style="margin-top:8px">${esc(s.status_text || "")}</div>
+    ${trade}
+    ${lv ? `<table style="margin-top:8px"><tbody>${lv}</tbody></table>` : ""}
+    ${size}
+    <div class="row" style="margin-top:8px;gap:6px">${times}</div>
+    ${full ? edgeLine(s.stats) : ""}
+    ${full ? `<div id="dch-${esc(s.id)}" style="height:260px;margin-top:8px"></div>` : ""}
+    ${bands}
+    ${full ? `<details style="margin-top:8px"><summary>Rules and why it works</summary><p style="margin:8px 0 0"><b>Rules:</b> ${esc(s.rules)}</p><p class="muted" style="margin:6px 0 0;font-size:12.5px">${esc(s.why)}</p></details>` : `<div style="margin-top:8px"><a href="#day">Details & chart →</a></div>`}
+  </div>`;
+}
+function dayFreshness() {
+  if (!IN) return `<div class="banner">Day-trading engine has not run yet. It runs every 30 minutes on weekdays from GitHub Actions.</div>`;
+  const g = new Date(IN.generated_at.replace(" UTC", "Z").replace(" ", "T"));
+  const mins = Math.round((Date.now() - g) / 60000);
+  const warn = mins > 50 ? `<span class="stale">${mins > 1440 ? Math.round(mins / 1440) + " days" : mins + " min"} old</span>` : "";
+  return `<div class="muted" style="font-size:12.5px;margin:6px 0 10px">Day-trading plan updated ${lt(g.toISOString())} (${esc(IN.generated_at)}) ${warn}. GitHub runs it every 30 minutes; prices from Yahoo are a few minutes delayed, so place the levels as orders at your broker.</div>`;
+}
+function dayLogCard() {
+  const L = D.daytrade_log || [];
+  if (!L.length) return `<div class="card empty">No live day trades logged yet. Every closed trade is recorded here automatically and compared with the backtest.</div>`;
+  const by = {}; L.forEach(r => { (by[r.system] = by[r.system] || []).push(+r.R); });
+  const rows = Object.entries(by).map(([k, v]) => `<tr><td class="l">${esc(k)}</td><td class="mono">${v.length}</td><td class="mono">${pct0(v.filter(x => x > 0).length / v.length)}</td><td class="mono">${R(v.reduce((a, b) => a + b, 0) / v.length)}</td><td class="mono">${R(v.reduce((a, b) => a + b, 0), 1)}</td></tr>`).join("");
+  return `<div class="card tw"><table><thead><tr><th class="l">System</th><th>Trades</th><th>Hit</th><th>Avg</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
+  <details style="margin-top:8px"><summary>Last trades</summary><table><tbody>${L.slice(-20).reverse().map(r => `<tr><td class="l mono">${esc(r.day)}</td><td class="l">${esc(r.system)}</td><td>${esc(r.dir)}</td><td class="mono">${R(+r.R)}</td><td class="l">${esc(r.outcome)}</td></tr>`).join("")}</tbody></table></details></div>`;
+}
+function viewDay() {
+  if (!IN) { $("#view").innerHTML = acctBar() + dayFreshness(); bindAcct(viewDay); return; }
+  const order = {"IN TRADE": 0, "ORDERS": 1, "WATCHING": 1, "WAITING": 2, "DONE": 3, "NO TRADE": 4, "NO DATA": 5, "CLOSED": 6, "ERROR": 7};
+  const sys = [...IN.systems].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+  let h = acctBar() + dayFreshness();
+  h += `<div class="grid g2">${sys.map(s => dayCard(s, true)).join("")}</div>`;
+  h += `<div class="sec">Live track record (day trades)</div>` + dayLogCard();
+  h += `<div class="card" style="margin-top:12px;font-size:13px"><b>How to use it.</b> Grade <b>B</b> systems passed significance and stayed positive after 2022; grade <b>C</b> ones are positive in every period but not proven — paper-trade them first.
+  All six are small edges (+0.05 to +0.13R per trade): the profit comes from taking <i>every</i> signal at a fixed small risk, not from any single trade.
+  Research: <code>daytrade/</code> in the repo (12 years of 5-minute data, costs included).</div>`;
+  $("#view").innerHTML = h;
+  bindAcct(viewDay);
+  for (const s of sys) {
+    const el = document.getElementById("dch-" + s.id); if (!el || !s.chart || !s.chart.length) { if (el) el.innerHTML = `<div class="empty">No bars for today yet.</div>`; continue; }
+    const c = mkChart(el, 260);
+    c.applyOptions({timeScale: {timeVisible: true, secondsVisible: false, tickMarkFormatter: t => new Date(t * 1000).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})},
+      localization: {timeFormatter: t => new Date(t * 1000).toLocaleString([], {hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short"})}});
+    const cs = c.addCandlestickSeries({upColor: "#22c55e", downColor: "#ef4444", borderVisible: false, wickUpColor: "#22c55e", wickDownColor: "#ef4444"});
+    cs.setData(s.chart.map(k => ({time: k.t, open: k.o, high: k.h, low: k.l, close: k.c})));
+    for (const [k, v] of (s.levels || [])) if (typeof v === "number" && !/Risk|Range \//.test(k)) cs.createPriceLine({price: v, color: /low|Short|Sell/i.test(k) ? "#ef4444" : /high|Long|Buy/i.test(k) ? "#22c55e" : "#8796a8", lineWidth: 1, lineStyle: 2, title: k.split(" (")[0]});
+    if (s.trade && s.trade.entry) { cs.createPriceLine({price: s.trade.entry, color: "#f5a524", lineWidth: 1, title: "entry"}); if (s.trade.stop) cs.createPriceLine({price: s.trade.stop, color: "#ef4444", lineWidth: 1, title: "stop"}); }
+    c.timeScale().fitContent();
+  }
+}
+function daySummary() {
+  if (!IN) return `<div class="sec">Day trading today</div>` + dayFreshness();
+  const order = {"IN TRADE": 0, "ORDERS": 1, "WATCHING": 1, "WAITING": 2, "DONE": 3, "NO TRADE": 4, "NO DATA": 5, "CLOSED": 6, "ERROR": 7};
+  const cards = [...IN.systems].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9)).map(s => {
+    const lv = (s.levels || []).filter(l => typeof l[1] === "number").slice(0, 3).map(l => `<div class="row" style="justify-content:space-between;font-size:12px"><span class="muted">${esc(l[0].split(" (")[0])}</span><b class="mono">${nf(l[1], s.nd ?? 2)}</b></div>`).join("");
+    const t = s.trade;
+    const tr = t ? (t.state === "OPEN" ? `<div class="mono" style="font-size:12.5px;margin-top:4px"><span class="${t.dir === "LONG" ? "long" : "short"}">${esc(t.dir)}</span> @ ${nf(t.entry, s.nd ?? 2)} · ${R(t.R_now)}</div>` : `<div class="mono" style="font-size:12.5px;margin-top:4px">Result ${R(t.R)}</div>`) : "";
+    return `<div class="card mk" data-go="day"><div class="mk-top"><span class="mk-name">${esc(s.market)}</span><span class="row" style="gap:5px">${stTag(s.status)} ${evTag(s.evidence)}</span></div>
+      <div class="dim" style="font-size:11.5px">${esc(s.name)}</div>
+      <div style="font-size:12.5px;margin-top:6px">${esc(s.status_text || "")}</div>${tr}
+      <div style="margin-top:6px">${lv}</div>
+      <div class="muted mono" style="font-size:11.5px;margin-top:6px">P(win) ${pct0(s.stats.hit)} · exp ${R(s.stats.meanR, 3)} · ${nf(s.stats.per_year, 0)}/yr</div></div>`;
+  }).join("");
+  return `<div class="sec">Day trading today</div>${dayFreshness()}<div class="grid g3">${cards}</div>`;
+}
+
 // ------------------------------------------------------------------ router
 function route() {
   clearCharts();
   const h = (location.hash || "#today").slice(1);
   document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", h === a.dataset.v || (h.startsWith("m-") && a.dataset.v === "markets")));
   if (h.startsWith("m-")) viewMarket(h.slice(2));
-  else ({today: viewToday, markets: viewMarkets, macro: viewMacro, lab: viewLab, method: viewMethod}[h] || viewToday)();
+  else ({today: viewToday, day: viewDay, markets: viewMarkets, macro: viewMacro, lab: viewLab, method: viewMethod}[h] || viewToday)();
   window.scrollTo(0, 0);
 }
 document.addEventListener("click", e => { const g = e.target.closest("[data-go]"); if (g && !e.target.closest("a")) location.hash = g.dataset.go; });

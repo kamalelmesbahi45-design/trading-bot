@@ -1,4 +1,12 @@
-# Edge Desk — daily multi-market signal & risk dashboard
+# Edge Desk — swing + day-trading signal & risk dashboard
+
+**Two systems on one page:**
+* **Swing (daily bars, 15 markets)** — `run.py`, every day at 00:20 UTC (+06:20 UTC weekdays).
+* **Day trading (6 intraday systems)** — `run_intraday.py`, every 30 minutes 05:00-22:00 UTC on weekdays:
+  Nasdaq & S&P 500 big-move continuation (13:30 NY), gold big-move continuation (10:00 NY),
+  DAX 30-min opening-range breakout with trend, Nasdaq noise-band momentum, London breakout USD/JPY.
+  Rules, statistics and research: `engine/intraday.py`, `daytrade/`. The live engine is checked against the
+  research backtest trade-by-trade by `tests/test_intraday_replay.py`.
 
 Every weekday a GitHub Action downloads 20 years of daily data for 15 liquid markets,
 tests a fixed library of research-backed setups on each market's own history (net of costs),
