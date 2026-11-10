@@ -1,0 +1,31 @@
+name: daily-edge-run
+on:
+  schedule:
+    - cron: "17 22 * * 0-4"   # after the US close, Sun-Thu (signals for the next session)
+    - cron: "17 6 * * 1-5"    # morning refresh before London (crypto, Asia, calendar)
+  workflow_dispatch: {}        # "Run workflow" button for a manual refresh
+permissions:
+  contents: write
+concurrency:
+  group: edge-run
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python tests/test_engine.py
+      - run: python run.py --source auto
+      - name: Commit dashboard + data
+        run: |
+          git config user.name  "edge-bot"
+          git config user.email "edge-bot@users.noreply.github.com"
+          git add docs/index.html data/
+          git commit -m "daily run $(date -u +'%Y-%m-%d %H:%M') UTC" || echo "nothing to commit"
+          git push
