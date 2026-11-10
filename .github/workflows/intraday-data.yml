@@ -2,7 +2,12 @@ name: intraday-data
 # Downloads Dukascopy 1-minute history (free) for the day-trading universe, builds UTC M5 bars
 # and stores them as parquet on the `intraday-data` branch. Manual trigger; refresh weekly.
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      instruments:
+        description: 'JSON list of Dukascopy ids (empty = all 15)'
+        required: false
+        default: ""
   schedule:
     - cron: "41 3 * * 6"     # Saturday: append the latest week
 permissions:
@@ -15,7 +20,7 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
-        inst: [usatechidxusd, usa500idxusd, deuidxeur, xauusd, eurusd, gbpusd, usdjpy, btcusd]
+        inst: ${{ fromJSON(inputs.instruments || '["usatechidxusd","usa500idxusd","deuidxeur","xauusd","eurusd","gbpusd","usdjpy","btcusd","xagusd","audusd","usdcad","usdchf","ethusd","lightcmdusd","ustbondtrusd"]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,7 +32,8 @@ jobs:
       - name: Download M1 year by year
         run: |
           mkdir -p raw
-          START=2014; [ "${{ matrix.inst }}" = "btcusd" ] && START=2017
+          START=2014
+          case "${{ matrix.inst }}" in btcusd|ethusd) START=2017;; ustbondtrusd) START=2018;; esac
           END=$(date -u +%Y)
           for Y in $(seq $START $END); do
             TO="$((Y+1))-01-01"; [ "$Y" = "$END" ] && TO=now
@@ -58,7 +64,10 @@ jobs:
           git config user.name "edge-bot"; git config user.email "edge-bot@users.noreply.github.com"
           git remote add origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
           git checkout -q --orphan intraday-data
-          mkdir -p m5 && cp ../art/*.parquet m5/
+          mkdir -p m5
+          # keep instruments that were not rebuilt in this run
+          git clone -q --depth 1 --branch intraday-data https://github.com/${{ github.repository }}.git ../old && cp ../old/m5/*.parquet m5/ || true
+          cp ../art/*.parquet m5/
           echo "Dukascopy bid M5 bars (UTC), built $(date -u +'%F %T')" > README.md
           git add -A && git commit -q -m "intraday data $(date -u +%F)"
           git push -f origin intraday-data
