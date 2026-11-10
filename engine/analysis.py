@@ -40,15 +40,6 @@ def load_market(m: dict, source: str, local_dir: str | None):
     # never trade off an unfinished candle: drop any bar dated today (UTC)
     today = pd.Timestamp(dt.datetime.now(dt.timezone.utc).date())
     df = df[df.index < today]
-    if m["cls"] == "FX major":
-        # spot FX trades ~24h: Yahoo's daily open is a snapshot from another time stamp, which
-        # creates fake gaps. Standard cleaning: open = previous close (except after weekends).
-        prev = df["Close"].shift()
-        wk = (df.index.to_series().diff().dt.days <= 1).values
-        df = df.copy()
-        df.loc[wk, "Open"] = prev[wk]
-        df["High"] = df[["Open", "High", "Close"]].max(axis=1)
-        df["Low"] = df[["Open", "Low", "Close"]].min(axis=1)
     if len(df) == 0:
         return None, None
     start = df.index[-1] - pd.Timedelta(days=int(365.25 * C.HISTORY_YEARS))

@@ -113,11 +113,18 @@ def load_yahoo_intraday(ticker: str) -> pd.DataFrame | None:
 
 
 # --------------------------------------------------------------------------- FRED
+_FRED_DOWN = False
+
+
 def load_fred(series: str, tries: int = 2) -> pd.Series | None:
+    """FRED sometimes refuses cloud runners: after one total failure we stop trying (circuit breaker)."""
+    global _FRED_DOWN
+    if _FRED_DOWN:
+        return None
     start = (dt.date.today() - dt.timedelta(days=3 * 365)).isoformat()
     for k in range(tries):
         try:
-            r = _get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start}", timeout=60)
+            r = _get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start}", timeout=25)
             df = pd.read_csv(io.StringIO(r.text))
             df.columns = ["date", "value"]
             s = pd.to_numeric(df["value"], errors="coerce")
@@ -125,6 +132,7 @@ def load_fred(series: str, tries: int = 2) -> pd.Series | None:
             return s.dropna()
         except Exception as e:
             _err(f"fred {series} try {k + 1}: {e}")
+    _FRED_DOWN = True
     return None
 
 
