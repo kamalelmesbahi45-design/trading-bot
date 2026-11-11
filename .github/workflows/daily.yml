@@ -1,0 +1,33 @@
+name: daily-edge-run
+on:
+  schedule:
+    - cron: "20 0 * * *"      # 00:20 UTC: every market's previous daily candle is complete
+    - cron: "20 6 * * 1-5"    # 06:20 UTC: morning refresh/retry before London (calendar, data fixes)
+  workflow_dispatch: {}        # "Run workflow" button for a manual refresh
+permissions:
+  contents: write
+concurrency:
+  group: edge-run
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python tests/test_engine.py
+      - run: python tests/test_intraday_units.py
+      - run: python run.py --source auto
+      - name: Commit dashboard + data
+        run: |
+          git config user.name  "edge-bot"
+          git config user.email "edge-bot@users.noreply.github.com"
+          git add docs/index.html data/
+          git commit -m "daily run $(date -u +'%Y-%m-%d %H:%M') UTC" || exit 0
+          for i in 1 2 3; do git pull -q --rebase origin "$GITHUB_REF_NAME" && git push -q && exit 0; sleep 5; done
+          exit 1
