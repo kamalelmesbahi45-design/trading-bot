@@ -1,0 +1,23 @@
+OK https://squeezemetrics.com/monitor/static/DIX.csv -> out/DIX.csv (224293 bytes)
+try 1 FAIL https://fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL: HTTPSConnectionPool(host='fred.stlouisfed.org', port=443): Read timed out. (read timeout=20)
+OK https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm -> out/fomc_current.html (166065 bytes)
+OK https://www.federalreserve.gov/monetarypolicy/fomchistorical2014.htm -> out/fomc_2014.html (96265 bytes)
+OK https://www.federalreserve.gov/monetarypolicy/fomchistorical2015.htm -> out/fomc_2015.html (95417 bytes)
+OK https://www.federalreserve.gov/monetarypolicy/fomchistorical2016.htm -> out/fomc_2016.html (96005 bytes)
+OK https://www.federalreserve.gov/monetarypolicy/fomchistorical2017.htm -> out/fomc_2017.html (95376 bytes)
+OK https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm -> out/fomc_2018.html (95881 bytes)
+OK https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm -> out/fomc_2019.html (97520 bytes)
+OK https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm -> out/fomc_2020.html (98731 bytes)
+OK yahoo ^VIX 9288
+OK yahoo ^VIX3M 5116
+OK yahoo ^VIX9D 3991
+OK yahoo ^GSPC 24836
+OK yahoo ^NDX 10361
+OK yahoo ^GDAXI 9832
+OK yahoo IEF 6114
+OK yahoo TLT 6114
+OK yahoo ^TNX 16206
+OK yahoo DX-Y.NYB 14186
+OK yahoo HYG 4932
+OK yahoo GC=F 6578
+OK yahoo ^MOVE 5936
