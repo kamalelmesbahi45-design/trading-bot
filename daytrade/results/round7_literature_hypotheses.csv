@@ -1,0 +1,58 @@
+test,unit,n,hit,mean,t,p,m_2014-19,n_2014-19,m_2020-22,n_2020-22,m_2023-26,n_2023-26,rest_mean,rest_n,group,fdr10
+H1|SPX500|threshold z>1 hold 1d,bp,1793,0.473,2.994,1.3,0.09694051656477493,-0.747,834.0,18.455,357.0,-0.991,602.0,,,,False
+H1|SPX500|threshold z>1 hold 3d,bp,2483,0.474,3.475,1.63,0.05148665641942136,0.632,1136.0,18.362,545.0,-2.614,802.0,,,,False
+H2|SPX500|calendar last-4 + first-day reversal,bp,774,0.517,8.593,2.34,0.009616521609978158,13.628,360.0,-0.103,180.0,7.534,234.0,,,,False
+"H2|SPX500|calendar, VIX above 1y median",bp,363,0.512,9.03,1.33,0.09237534117681406,17.57,160.0,-6.832,107.0,12.478,96.0,,,,False
+H1|NAS100|threshold z>1 hold 1d,bp,1793,0.476,5.275,1.85,0.032275747082757905,-0.894,834.0,26.858,357.0,1.022,602.0,,,,False
+H1|NAS100|threshold z>1 hold 3d,bp,2483,0.479,4.891,1.85,0.032444795820841844,0.58,1136.0,22.956,545.0,-1.279,802.0,,,,False
+H2|NAS100|calendar last-4 + first-day reversal,bp,774,0.537,11.482,2.4,0.008100314059998354,15.994,360.0,2.197,180.0,11.683,234.0,,,,False
+"H2|NAS100|calendar, VIX above 1y median",bp,363,0.526,13.148,1.54,0.06186481751100323,20.298,160.0,-1.974,107.0,18.086,96.0,,,,False
+"H3|SPX500|positive-gamma fade (GEX top quintile, contango)",R,99,0.444,-0.148,-2.22,0.986826540112582,-0.113,37.0,-0.123,24.0,-0.197,38.0,,,,False
+"H3|NAS100|positive-gamma fade (GEX top quintile, contango)",R,124,0.411,-0.09,-1.59,0.9437699664026178,-0.075,43.0,-0.077,25.0,-0.107,56.0,,,,False
+H4|NAS100|big-move k1: GEX bottom quintile vs rest,R diff,314,0.554,0.111,1.5,0.06671223572029587,0.184,152.0,0.092,98.0,-0.032,64.0,0.026,634.0,,False
+H4|SPX500|big-move k1: GEX bottom quintile vs rest,R diff,309,0.537,0.141,2.82,0.0024224000201983737,0.287,138.0,0.079,100.0,-0.056,71.0,-0.035,595.0,,True
+H5|USTBOND|slow trend futures-style,Sharpe,1499,,0.03,0.08,0.46925414336502635,,,0.67,,-0.49,,,,large-tick,False
+H5|USTBOND|slow trend CFD 3%/yr financing,Sharpe,1499,,-0.19,-0.46,1.0,,,0.43,,-0.71,,,,large-tick,False
+H5|XAUUSD|slow trend futures-style,Sharpe,2811,,0.6,2.02,0.02194980760436911,-0.33,,0.31,,1.54,,,,large-tick,False
+H5|XAUUSD|slow trend CFD 3%/yr financing,Sharpe,2811,,0.43,1.44,1.0,-0.56,,0.18,,1.38,,,,large-tick,False
+H5|XAGUSD|slow trend futures-style,Sharpe,2811,,0.06,0.21,0.41521358263530844,-0.51,,-0.38,,0.84,,,,large-tick,False
+H5|XAGUSD|slow trend CFD 3%/yr financing,Sharpe,2811,,-0.03,-0.08,1.0,-0.63,,-0.47,,0.77,,,,large-tick,False
+H5|WTI|slow trend futures-style,Sharpe,2806,,-0.2,-0.68,0.7516343113715994,-0.43,,0.48,,-0.9,,,,large-tick,False
+H5|WTI|slow trend CFD 3%/yr financing,Sharpe,2806,,-0.27,-0.9,1.0,-0.51,,0.43,,-0.98,,,,large-tick,False
+H5|BTCUSD|slow trend futures-style,Sharpe,2807,,0.13,0.44,0.33005999758369176,-1.0,,0.83,,-0.16,,,,large-tick,False
+H5|BTCUSD|slow trend CFD 3%/yr financing,Sharpe,2807,,0.08,0.25,1.0,-1.03,,0.78,,-0.23,,,,large-tick,False
+H5|SPX500|slow trend futures-style,Sharpe,2813,,0.41,1.36,0.08762869266115764,0.61,,0.13,,0.39,,,,small-tick,False
+H5|SPX500|slow trend CFD 3%/yr financing,Sharpe,2813,,0.18,0.61,1.0,0.34,,-0.04,,0.17,,,,small-tick,False
+H5|NAS100|slow trend futures-style,Sharpe,2811,,0.59,1.96,0.02495091627569771,0.79,,0.5,,0.42,,,,small-tick,False
+H5|NAS100|slow trend CFD 3%/yr financing,Sharpe,2811,,0.43,1.42,1.0,0.6,,0.37,,0.27,,,,small-tick,False
+H5|GER40|slow trend futures-style,Sharpe,2795,,0.11,0.35,0.3629494359396158,0.12,,-0.53,,0.56,,,,small-tick,False
+H5|GER40|slow trend CFD 3%/yr financing,Sharpe,2795,,-0.07,-0.25,1.0,-0.07,,-0.67,,0.35,,,,small-tick,False
+H5|EURUSD|slow trend futures-style,Sharpe,2838,,-0.02,-0.07,0.5267436547609416,-0.03,,0.44,,-0.55,,,,small-tick,False
+H5|EURUSD|slow trend CFD 3%/yr financing,Sharpe,2838,,-0.39,-1.3,1.0,-0.42,,0.09,,-0.93,,,,small-tick,False
+H5|GBPUSD|slow trend futures-style,Sharpe,2838,,-0.06,-0.2,0.5797418219176833,0.14,,0.43,,-0.98,,,,small-tick,False
+H5|GBPUSD|slow trend CFD 3%/yr financing,Sharpe,2838,,-0.35,-1.16,1.0,-0.13,,0.16,,-1.33,,,,small-tick,False
+H5|USDJPY|slow trend futures-style,Sharpe,2838,,0.09,0.29,0.3859035666617096,-0.75,,0.98,,-0.22,,,,small-tick,False
+H5|USDJPY|slow trend CFD 3%/yr financing,Sharpe,2838,,-0.21,-0.69,1.0,-1.05,,0.63,,-0.48,,,,small-tick,False
+H5|AUDUSD|slow trend futures-style,Sharpe,2838,,-0.2,-0.66,0.7438923225429541,-0.49,,0.32,,-0.39,,,,small-tick,False
+H5|AUDUSD|slow trend CFD 3%/yr financing,Sharpe,2838,,-0.46,-1.54,1.0,-0.8,,0.08,,-0.65,,,,small-tick,False
+H5|USDCAD|slow trend futures-style,Sharpe,2838,,-0.6,-2.0,0.9773087159440415,-0.75,,-0.09,,-0.95,,,,small-tick,False
+H5|USDCAD|slow trend CFD 3%/yr financing,Sharpe,2838,,-0.97,-3.25,1.0,-1.06,,-0.41,,-1.43,,,,small-tick,False
+H5|USDCHF|slow trend futures-style,Sharpe,2838,,-0.56,-1.87,0.9693486571355366,-1.19,,0.03,,-0.48,,,,small-tick,False
+H5|USDCHF|slow trend CFD 3%/yr financing,Sharpe,2838,,-0.91,-3.07,1.0,-1.57,,-0.3,,-0.85,,,,small-tick,False
+H5|POOL large-tick|slow trend futures-style,Sharpe,3622,,0.26,1.0,1.0,-0.72,,0.6,,0.61,,,,,False
+H5|POOL large-tick|slow trend CFD 3%/yr financing,Sharpe,3622,,0.09,0.34,1.0,-0.92,,0.45,,0.43,,,,,False
+H5|POOL small-tick|slow trend futures-style,Sharpe,2838,,0.02,0.05,1.0,-0.12,,0.42,,-0.3,,,,,False
+H5|POOL small-tick|slow trend CFD 3%/yr financing,Sharpe,2838,,-0.48,-1.62,1.0,-0.66,,0.01,,-0.87,,,,,False
+H6|POOL|55d breakout long: low-vol entry vs rest,R diff,178,0.275,0.495,0.32,0.37377564101233385,0.324,65.0,1.44,40.0,0.128,73.0,0.359,203.0,,False
+"H7|SPX500|high-VIX reversal (IBS<0.2, down 3d)",R,39,0.718,0.145,1.39,0.08301798500929691,0.182,17.0,0.161,8.0,,1.0,,,,False
+"H8|SPX500|VIX curve normalisation, hold 10d",R,34,0.559,0.262,1.64,0.05059795149079823,0.162,12.0,,3.0,,4.0,,,,False
+"H8|SPX500|VIX curve normalisation, hold 20d",R,33,0.667,0.399,1.99,0.023178121973092963,0.39,12.0,,3.0,,4.0,,,,False
+"H7|NAS100|high-VIX reversal (IBS<0.2, down 3d)",R,32,0.844,0.23,2.17,0.014955698237670694,0.314,15.0,0.047,5.0,,0.0,,,,False
+"H8|NAS100|VIX curve normalisation, hold 10d",R,34,0.588,0.243,1.46,0.07260762250235855,0.056,12.0,,3.0,,4.0,,,,False
+"H8|NAS100|VIX curve normalisation, hold 20d",R,33,0.545,0.326,1.48,0.06989154533896104,-0.009,12.0,,3.0,,4.0,,,,False
+H9|USTBOND|post-FOMC drift hold 5d,R,61,0.361,-0.147,-1.11,0.866869896306741,0.092,7.0,-0.202,23.0,-0.16,31.0,,,,False
+H9|USTBOND|post-FOMC drift hold 15d,R,60,0.433,0.162,0.79,0.2148695540347052,0.222,7.0,0.035,23.0,0.245,30.0,,,,False
+H10|SPX500|turn-of-month long T-1 -> T+3,bp,154,0.558,8.826,0.58,0.279738469794641,-11.185,72.0,23.465,36.0,28.691,46.0,,,,False
+H10|SPX500|pre-month-end short T-8 -> T-4,bp,154,0.396,-20.198,-1.24,0.8930262718026383,10.321,72.0,-52.606,36.0,-42.605,46.0,,,,False
+H10|NAS100|turn-of-month long T-1 -> T+3,bp,154,0.558,15.986,0.84,0.19992749003799076,-3.437,72.0,18.773,36.0,44.207,46.0,,,,False
+H10|NAS100|pre-month-end short T-8 -> T-4,bp,154,0.39,-26.024,-1.26,0.8968928447215306,-9.061,72.0,-46.695,36.0,-36.397,46.0,,,,False
