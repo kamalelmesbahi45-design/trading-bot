@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edge Desk — daily multi-market signals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e13;--panel:#111821;--panel2:#0e141c;--line:#1e2936;--text:#dbe3ec;--muted:#8796a8;--dim:#5d6b7c;
+--up:#22c55e;--down:#ef4444;--amber:#f5a524;--blue:#4f8cff;--violet:#a78bfa;--A:#22c55e;--B:#4f8cff;--C:#f5a524;--X:#5d6b7c}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+a{color:var(--blue);text-decoration:none}
+.wrap{max-width:1280px;margin:0 auto;padding:12px 14px 60px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:6px 0 10px}
+.brand{font-weight:700;font-size:18px;letter-spacing:.2px}
+.brand small{color:var(--muted);font-weight:500;font-size:12px;margin-left:6px}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--muted);white-space:nowrap}
+.pill b{color:var(--text)}
+nav{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:14px;scrollbar-width:none;position:sticky;top:0;background:var(--bg);z-index:5}
+nav a{padding:10px 12px;color:var(--muted);font-weight:600;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap}
+nav a.on{color:var(--text);border-color:var(--blue)}
+.banner{border:1px solid #5b4511;background:#1d1708;color:#f3d48b;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h3{margin:0 0 8px;font-size:14px}
+.sec{margin:18px 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.muted{color:var(--muted)}.dim{color:var(--dim)}.up{color:var(--up)}.down{color:var(--down)}.amb{color:var(--amber)}
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:6px;font-weight:700;font-size:12px;color:#06110a}
+.gA{background:var(--A)}.gB{background:var(--B);color:#fff}.gC{background:var(--C)}.gX{background:#2a3441;color:var(--muted)}
+.tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:5px;background:#1a2330;color:var(--muted);border:1px solid var(--line)}
+.long{color:var(--up);font-weight:700}.short{color:var(--down);font-weight:700}
+.sig-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.sig-title{font-weight:700;font-size:15px}
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;margin:12px 0}
+.kv{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+.kv .k{font-size:11px;color:var(--muted)}.kv .v{font-size:14px;font-weight:600}
+.pbar{position:relative;height:10px;background:#1b2531;border-radius:6px;margin:6px 0 2px;overflow:visible}
+.pbar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px}
+.pbar .be{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff}
+ul.r{margin:8px 0 0;padding-left:18px}ul.r li{margin:3px 0}
+details{margin-top:8px}summary{cursor:pointer;color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:6px 7px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{color:var(--muted);font-weight:600;font-size:11.5px;cursor:pointer;position:sticky;top:0;background:var(--panel)}
+td:first-child,th:first-child,td.l,th.l{text-align:left}
+.tw{overflow-x:auto;max-width:100%}
+tr.click{cursor:pointer}tr.click:hover td{background:#152030}
+.mk{cursor:pointer;transition:border-color .15s}.mk:hover{border-color:#34465c}
+.mk-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.mk-name{font-weight:700}.mk-px{font-size:16px;font-weight:600}
+.chg{display:flex;gap:10px;font-size:12px;margin-top:2px}
+.biasbar{position:relative;height:8px;border-radius:5px;background:linear-gradient(90deg,#3a1518,#1b2531 50%,#0f2c1b);margin:8px 0 3px}
+.biasbar i{position:absolute;top:-3px;width:3px;height:14px;background:#fff;border-radius:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chart{width:100%;height:380px}
+@media (max-width:640px){.chart{height:290px}.wrap{padding:10px 10px 60px}}
+.heat td{text-align:center;font-size:11px;padding:4px 3px;min-width:38px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:120px;border-bottom:1px solid var(--line);padding-top:6px}
+.bars div{flex:1;position:relative;border-radius:3px 3px 0 0;min-height:1px}
+.bars-l{display:flex;gap:3px;font-size:10px;color:var(--dim)}.bars-l span{flex:1;text-align:center}
+.tip{position:fixed;pointer-events:none;background:#000d;border:1px solid var(--line);border-radius:6px;padding:4px 7px;font-size:12px;z-index:50;display:none}
+.empty{padding:18px;text-align:center;color:var(--muted)}
+.back{display:inline-block;margin-bottom:10px;font-weight:600}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.stale{color:#fff;background:#7f1d1d;border-radius:5px;padding:1px 6px;font-size:11px;font-weight:700}
+footer{margin-top:30px;color:var(--dim);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+.method p,.method li{color:#c4cfdb}.method h3{margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand">EDGE DESK <small>multi-market signal & risk dashboard</small></div>
+  <div class="pills" id="pills"></div>
+</header>
+<nav id="nav">
+  <a href="#today" data-v="today">Today</a>
+  <a href="#day" data-v="day">Day trading</a>
+  <a href="#markets" data-v="markets">Swing markets</a>
+  <a href="#macro" data-v="macro">Macro</a>
+  <a href="#lab" data-v="lab">Edge Lab</a>
+  <a href="#method" data-v="method">Method</a>
+</nav>
+<div id="banner"></div>
+<main id="view"></main>
+<footer>
+  Research tool, not financial advice. Probabilities are historical frequencies of the exact rule on this market, shrunk toward "no edge"; they describe the past and can fail.
+  Charts: <a href="https://github.com/tradingview/lightweight-charts">TradingView Lightweight Charts</a> (Apache-2.0). Data: Yahoo Finance via yfinance, FRED, CFTC, ForexFactory feed, public GitHub datasets.
+</footer>
+</div>
+<div class="tip" id="tip"></div>
+<script>/*__LWC__*/</script>
+<script>
+const D = /*__DATA__*/null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const M = Object.fromEntries((D?.markets || []).map(m => [m.id, m]));
+const nf = (x, nd = 2) => { if (x == null || isNaN(x)) return "—"; const s = Number(x).toLocaleString("en-US", {minimumFractionDigits: nd, maximumFractionDigits: nd}); return /^-0(\.0+)?$/.test(s) ? s.slice(1) : s; };
+const px = (x, m) => nf(x, m ? (m.nd ?? 2) : 2);
+const pc = (x, nd = 2) => x == null ? "—" : `<span class="${x > 0 ? "up" : x < 0 ? "down" : ""}">${x > 0 ? "+" : ""}${nf(x, nd)}%</span>`;
+const pct0 = x => x == null ? "—" : `${Math.round(x * 100)}%`;
+const R = (x, nd = 2) => x == null ? "—" : `<span class="${x > 0 ? "up" : x < 0 ? "down" : ""}">${x > 0 ? "+" : ""}${nf(x, nd)}R</span>`;
+const gb = g => `<span class="badge g${g}">${g === "X" ? "–" : g}</span>`;
+const GRADE_TXT = {A: "Robust edge (survives multiple-testing + out-of-sample)", B: "Promising edge (significant, OOS positive, not FDR-proof)", C: "Weak / unproven — watch only", X: "No edge — skip"};
+const genDate = D ? new Date(D.generated_at.replace(" UTC", "Z").replace(" ", "T")) : new Date();
+function ageDays(m) { return Math.floor((genDate - new Date(m.last_date + "T00:00:00Z")) / 864e5); }
+function isStale(m) { const a = ageDays(m); return m.cls === "Crypto" ? a > 2 : a > 4; }
+const staleTag = m => isStale(m) ? ` <span class="stale">DATA ${ageDays(m)}d OLD</span>` : "";
+
+// ------------------------------------------------------------------ header
+function header() {
+  const mac = D.macro || {};
+  const reg = mac.regime || "n/a";
+  const regCls = reg === "RISK-ON" ? "up" : reg === "RISK-OFF" ? "down" : "amb";
+  const act = D.signals.filter(s => s.grade === "A" || s.grade === "B").length;
+  $("#pills").innerHTML = `
+    <span class="pill">Run <b class="mono">${esc(D.generated_at)}</b></span>
+    <span class="pill">Macro <b class="${regCls}">${esc(reg)}</b></span>
+    <span class="pill">Markets <b>${D.markets.length}/${D.universe.length}</b></span>
+    <span class="pill">Swing signals <b>${act}</b></span>
+    <span class="pill">Day trades now <b>${(D.intraday?.systems || []).filter(x => ["IN TRADE", "ORDERS", "WATCHING"].includes(x.status)).length}</b></span>
+    <span class="pill">Edges passing FDR <b>${D.tests.fdr_pass}/${D.tests.n}</b></span>`;
+  if (D.snapshot) {
+    $("#banner").innerHTML = `<div class="banner"><b>${D.source === "mirror" ? "Demo snapshot." : "Fallback data in use."}</b> ${D.source === "mirror" ? "Built" : "Some markets are built"} on real but <b>delayed</b> public datasets mirrored on GitHub (the live feed was not reachable).
+    Each market shows its own "as of" date — signals here are a demonstration, not for today's trading. The GitHub Actions version refreshes all ${D.universe.length} markets from Yahoo/FRED/CFTC every weekday.
+    ${D.missing.length ? `Not in this snapshot: ${D.missing.map(esc).join(", ")}.` : ""}</div>`;
+  }
+}
+
+// ------------------------------------------------------------------ helpers
+function spark(vals, w = 120, h = 34, color) {
+  const v = vals.filter(x => x != null);
+  if (v.length < 2) return "";
+  const mn = Math.min(...v), mx = Math.max(...v), rg = mx - mn || 1;
+  const pts = v.map((y, i) => `${(i / (v.length - 1) * w).toFixed(1)},${(h - 2 - (y - mn) / rg * (h - 4)).toFixed(1)}`).join(" ");
+  const c = color || (v[v.length - 1] >= v[0] ? "var(--up)" : "var(--down)");
+  return `<svg width="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="height:${h}px;display:block"><polyline fill="none" stroke="${c}" stroke-width="1.5" points="${pts}"/></svg>`;
+}
+function tipOn(el) {
+  const t = $("#tip");
+  el.addEventListener("pointermove", e => { const s = e.target.closest("[data-tip]"); if (!s) { t.style.display = "none"; return; }
+    t.innerHTML = s.dataset.tip; t.style.display = "block"; t.style.left = Math.min(e.clientX + 12, innerWidth - 220) + "px"; t.style.top = (e.clientY + 14) + "px"; });
+  el.addEventListener("pointerleave", () => t.style.display = "none");
+}
+function probBar(p, be) {
+  if (p == null) return "";
+  const col = p > be ? "var(--up)" : "var(--down)";
+  return `<div class="pbar"><div class="fill" style="width:${p * 100}%;background:${col}"></div><div class="be" style="left:${be * 100}%"></div></div>
+  <div class="row muted" style="font-size:11.5px;justify-content:space-between"><span>P(target before stop) <b class="mono" style="color:var(--text)">${pct0(p)}</b></span><span>break-even ${pct0(be)} ▏</span></div>`;
+}
+
+// ------------------------------------------------------------------ TODAY
+function signalCard(s) {
+  const m = M[s.market];
+  const dcls = s.dir === "LONG" ? "long" : "short";
+  const tradeable = s.grade === "A" || s.grade === "B";
+  return `<div class="card">
+    <div class="sig-head"><div>
+      <div class="sig-title"><span class="${dcls}">${s.dir}</span> ${esc(s.name)}</div>
+      <div class="muted" style="font-size:12.5px">${esc(s.label)} · ${esc(s.style)} · as of ${esc(s.asof)}${staleTag(m)}</div></div>
+      <div title="${esc(GRADE_TXT[s.grade])}">${gb(s.grade)}</div></div>
+    <div class="plan mono">
+      <div class="kv"><div class="k">Entry</div><div class="v">${px(s.entry, m)}</div></div>
+      <div class="kv"><div class="k">Stop (−1R)</div><div class="v down">${px(s.stop, m)}</div></div>
+      <div class="kv"><div class="k">Target (+${nf(s.rr, 1)}R)</div><div class="v up">${px(s.target, m)}</div></div>
+      <div class="kv"><div class="k">Time stop</div><div class="v">${esc(s.time_stop)}</div></div>
+      <div class="kv"><div class="k">Expectancy</div><div class="v">${R(s.exp_R)}</div></div>
+      <div class="kv"><div class="k">Size at ${nf(ACC.risk_swing, 2)}%</div><div class="v" style="font-size:12.5px">${tradeable ? sizeText(s.name, s.entry, s.stop, ACC.risk_swing) : "watch only"}</div></div>
+    </div>
+    ${probBar(s.prob, s.p_be)}
+    <div class="muted" style="font-size:12px;margin-top:6px">${esc(GRADE_TXT[s.grade])} · n=${s.n ?? "—"} · bias ${s.bias > 0 ? "+" : ""}${nf(s.bias, 0)} ${s.bias_aligned ? '<span class="up">aligned</span>' : '<span class="amb">against bias</span>'}</div>
+    <details ${tradeable ? "open" : ""}><summary>Why enter · why exit</summary>
+      <ul class="r">${s.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul>
+      <p style="margin:8px 0 0"><b>Entry:</b> ${esc(s.entry_txt)}<br><b>Exit:</b> ${esc(s.exit_txt)}<br><b>Invalidation:</b> ${esc(s.invalidation)}</p>
+      <p class="muted" style="margin:8px 0 0;font-size:12.5px"><b>Edge source:</b> ${esc(s.why)}</p>
+    </details>
+    <div style="margin-top:10px"><a href="#m-${esc(s.market)}">Open ${esc(s.market)} chart →</a></div>
+  </div>`;
+}
+function watchlist() {
+  // markets close to a trigger (not yet a signal)
+  const out = [];
+  for (const m of D.markets) {
+    if (!m.atr) continue;
+    if (m.hh55 && m.mom12 > 0 && m.mom3 > 0 && m.price < m.hh55 && (m.hh55 - m.price) / m.atr < 0.75)
+      out.push([m, `${((m.hh55 - m.price) / m.atr).toFixed(2)} ATR below the 55-day high ${px(m.hh55, m)} → long breakout if a close prints above it`]);
+    if (m.ll55 && m.mom12 < 0 && m.mom3 < 0 && m.price > m.ll55 && (m.price - m.ll55) / m.atr < 0.75)
+      out.push([m, `${((m.price - m.ll55) / m.atr).toFixed(2)} ATR above the 55-day low ${px(m.ll55, m)} → short breakout if a close prints below it`]);
+    if (m.sma200 && m.price > m.sma200 && m.mom12 > 0 && m.rsi2 < 25 && m.rsi2 >= 10)
+      out.push([m, `Up-trend pullback forming (RSI-2 ${nf(m.rsi2, 1)}; trigger < 10)`]);
+    if (m.sma200 && m.price < m.sma200 && m.mom12 < 0 && m.rsi2 > 75 && m.rsi2 <= 90)
+      out.push([m, `Down-trend bounce forming (RSI-2 ${nf(m.rsi2, 1)}; trigger > 90)`]);
+    if (m.bbw_pct != null && m.bbw_pct < 0.15) out.push([m, `Volatility squeeze (Bollinger width at ${Math.round(m.bbw_pct * 100)}th pct of the year) → watch the 20-day range ${px(m.ll20, m)} – ${px(m.hh20, m)}`]);
+  }
+  return out;
+}
+function viewToday() {
+  const tr = D.signals.filter(s => s.grade === "A" || s.grade === "B");
+  const wt = D.signals.filter(s => s.grade === "C");
+  const nx = D.signals.filter(s => s.grade === "X");
+  const wl = watchlist();
+  let h = acctBar() + daySummary() + `<div class="sec">Swing signals (daily bars) — tradeable, grade A/B</div>`;
+  h += tr.length ? `<div class="grid g2">${tr.map(signalCard).join("")}</div>`
+    : `<div class="card empty">No setup with a proven edge triggered on the latest bar. <b>No trade is a position</b> — the edge comes from only pulling the trigger when the statistics are on your side.</div>`;
+  if (D.clusters?.length) h += `<div class="card" style="margin-top:12px"><b class="amb">Same-bet warning:</b> ${D.clusters.map(c => `${esc(c.a)} & ${esc(c.b)} (ρ=${c.corr})`).join(", ")} move together — treat them as one position for risk.</div>`;
+  h += `<div class="sec">Watch only (setup present, edge weak or unproven)</div>`;
+  h += wt.length ? `<div class="grid g2">${wt.map(signalCard).join("")}</div>` : `<div class="card empty">None.</div>`;
+  if (nx.length) h += `<details class="card"><summary>${nx.length} setup(s) triggered but historically had NO edge on that market — skip</summary><div class="grid g2" style="margin-top:10px">${nx.map(signalCard).join("")}</div></details>`;
+  h += `<div class="sec">Near a trigger (prepare alerts)</div>`;
+  h += wl.length ? `<div class="card"><table><tbody>${wl.map(([m, t]) => `<tr class="click" data-go="m-${esc(m.id)}"><td class="l"><b>${esc(m.name)}</b>${staleTag(m)}</td><td class="l" style="white-space:normal">${esc(t)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="card empty">Nothing close to a trigger.</div>`;
+  const J = D.journal || {closed: [], open: 0};
+  h += `<div class="sec">Live track record (signals logged by this dashboard, scored on later bars, before costs)</div>`;
+  if (!J.closed.length) h += `<div class="card empty">No closed live signals yet${J.open ? ` (${J.open} still open)` : ""}. Every daily run logs its signals; this table fills up automatically and is the only fully out-of-sample proof.</div>`;
+  else {
+    const by = g => { const x = J.closed.filter(c => g === "all" || c.grade === g); return x.length ? `${x.length} trades · hit ${pct0(x.filter(c => c.R > 0).length / x.length)} · avg ${R(x.reduce((a, c) => a + c.R, 0) / x.length)}` : "—"; };
+    h += `<div class="card"><div class="row" style="gap:18px;font-size:13px"><span><b>All:</b> ${by("all")}</span><span>${gb("A")} ${by("A")}</span><span>${gb("B")} ${by("B")}</span><span>${gb("C")} ${by("C")}</span><span class="muted">${J.open} open</span></div>
+    <div class="tw" style="margin-top:8px"><table><thead><tr><th class="l">Signal date</th><th class="l">Market</th><th class="l">Setup</th><th>Dir</th><th>Grade</th><th>P</th><th>Result</th><th class="l">Exit</th></tr></thead><tbody>
+    ${J.closed.slice(-15).reverse().map(c => `<tr><td class="l mono">${esc(c.asof)}</td><td class="l">${esc(c.market)}</td><td class="l">${esc(c.setup)}</td><td>${c.dir === "LONG" ? '<span class="long">L</span>' : '<span class="short">S</span>'}</td><td>${gb(c.grade)}</td><td class="mono">${pct0(c.prob)}</td><td class="mono">${R(c.R)}</td><td class="l mono">${esc(c.outcome)} ${esc(c.exit)}</td></tr>`).join("")}</tbody></table></div></div>`;
+  }
+  const cal = (D.calendar || []).filter(e => e.impact === "High");
+  h += `<div class="sec">High-impact events this week</div>`;
+  h += cal.length ? `<div class="card tw"><table><thead><tr><th class="l">When (UTC)</th><th class="l">Ccy</th><th class="l">Event</th><th>Fcst</th><th>Prev</th></tr></thead><tbody>${cal.map(e => {
+      const d = new Date(e.date); return `<tr><td class="l mono">${isNaN(d) ? esc(e.date) : d.toISOString().slice(5, 16).replace("T", " ")}</td><td class="l">${esc(e.country)}</td><td class="l">${esc(e.title)}</td><td>${esc(e.forecast)}</td><td>${esc(e.previous)}</td></tr>`;
+    }).join("")}</tbody></table><div class="muted" style="font-size:12px;margin-top:6px">Day-trading rule: no new entries 15 min before/after a high-impact release in that currency; widen or reduce size on swing positions.</div></div>`
+    : `<div class="card empty">${D.source === "mirror" ? "Economic calendar is fetched in the live GitHub run." : "No high-impact events found."}</div>`;
+  $("#view").innerHTML = h;
+  bindAcct(viewToday);
+}
+
+// ------------------------------------------------------------------ MARKETS
+function bestGrade(m) { const o = "ABCX"; let g = "X"; for (const s of m.setups) if (o.indexOf(s.grade) < o.indexOf(g)) g = s.grade; return g; }
+function viewMarkets() {
+  const order = [...D.markets];
+  let h = `<div class="row" style="justify-content:space-between"><div class="sec" style="margin:0">${D.markets.length} markets · bias = trend/momentum/macro/positioning context (−100…+100), not a probability</div></div>
+  <div class="grid g3" style="margin-top:10px">`;
+  for (const m of order) {
+    const act = m.setups.filter(s => s.active);
+    const closes = m.candles.slice(-120).map(c => c.c);
+    h += `<div class="card mk" data-go="m-${esc(m.id)}">
+      <div class="mk-top"><span class="mk-name">${esc(m.name)}</span><span class="tag">${esc(m.cls)}</span></div>
+      <div class="mk-top" style="margin-top:4px"><span class="mk-px mono">${px(m.price, m)}</span><span class="muted mono" style="font-size:11.5px">${esc(m.last_date)}${staleTag(m)}</span></div>
+      <div class="chg mono"><span>1D ${pc(m.chg1d)}</span><span>1W ${pc(m.chg1w)}</span><span>1M ${pc(m.chg1m)}</span><span>1Y ${pc(m.chg1y, 1)}</span></div>
+      ${spark(closes, 300, 40)}
+      <div class="biasbar"><i style="left:calc(${(m.bias + 100) / 2}% - 1px)"></i></div>
+      <div class="row" style="justify-content:space-between;font-size:12px"><span>Bias <b class="mono ${m.bias > 0 ? "up" : m.bias < 0 ? "down" : ""}">${m.bias > 0 ? "+" : ""}${nf(m.bias, 0)}</b> · Trend <b>${esc(m.trend)}</b></span><span>Vol <b>${esc(m.vol_regime)}</b> (${nf(m.vol20, 1)}%)</span></div>
+      <div class="row" style="margin-top:8px;font-size:12px">${act.length ? act.map(s => `<span class="tag">${gb(s.grade)} ${s.dir > 0 ? "LONG" : "SHORT"} ${esc(s.key)}</span>`).join(" ") : `<span class="dim">No active setup</span>`}
+      <span class="dim" style="margin-left:auto">best edge ${gb(bestGrade(m))}</span></div>
+    </div>`;
+  }
+  h += `</div>`;
+  if (D.missing?.length) h += `<p class="muted">Not loaded in this run: ${D.missing.map(esc).join(", ")}.</p>`;
+  $("#view").innerHTML = h;
+}
+
+// ------------------------------------------------------------------ MARKET DETAIL
+let charts = [], observers = [];
+function clearCharts() { observers.forEach(o => o.disconnect()); observers = []; charts.forEach(c => { try { c.remove(); } catch (e) {} }); charts = []; }
+function mkChart(el, height) {
+  const c = LightweightCharts.createChart(el, {
+    height, layout: {background: {type: "solid", color: "#111821"}, textColor: "#8796a8", fontFamily: "JetBrains Mono, monospace", fontSize: 11},
+    grid: {vertLines: {color: "#18212c"}, horzLines: {color: "#18212c"}},
+    rightPriceScale: {borderColor: "#1e2936"}, timeScale: {borderColor: "#1e2936"},
+    crosshair: {mode: 0}, handleScroll: true, handleScale: true,
+  });
+  charts.push(c);
+  const ro = new ResizeObserver(() => { try { c.applyOptions({width: el.clientWidth}); } catch (e) {} });
+  ro.observe(el); observers.push(ro);
+  return c;
+}
+function viewMarket(id) {
+  const m = M[id];
+  if (!m) { $("#view").innerHTML = `<div class="card empty">Market ${esc(id)} not in this run.</div>`; return; }
+  const act = D.signals.filter(s => s.market === id);
+  let h = `<a class="back" href="#markets">← All markets</a>
+  <div class="card"><div class="row" style="justify-content:space-between">
+    <div><div style="font-size:20px;font-weight:700">${esc(m.name)} <span class="tag">${esc(m.cls)}</span></div>
+    <div class="muted" style="font-size:12px">${esc(m.source)} · ${esc(m.first_date)} → ${esc(m.last_date)} · ${m.bars} bars${m.ohlc ? "" : " · close-only data"}${staleTag(m)}</div></div>
+    <div style="text-align:right"><div class="mono" style="font-size:22px;font-weight:600">${px(m.price, m)}</div><div class="chg mono" style="justify-content:flex-end">1D ${pc(m.chg1d)} 1W ${pc(m.chg1w)} 1M ${pc(m.chg1m)} 3M ${pc(m.chg3m)}</div></div></div>
+    <div class="plan mono" style="margin-bottom:4px">
+      <div class="kv"><div class="k">Bias</div><div class="v ${m.bias > 0 ? "up" : "down"}">${m.bias > 0 ? "+" : ""}${nf(m.bias, 0)}</div></div>
+      <div class="kv"><div class="k">Trend</div><div class="v">${esc(m.trend)}</div></div>
+      <div class="kv"><div class="k">ATR(14)</div><div class="v">${px(m.atr, m)} <span class="muted">(${nf(m.atr_pct, 2)}%)</span></div></div>
+      <div class="kv"><div class="k">Vol 20d / regime</div><div class="v">${nf(m.vol20, 1)}% · ${esc(m.vol_regime)}</div></div>
+      <div class="kv"><div class="k">RSI 2 / 14</div><div class="v">${nf(m.rsi2, 0)} / ${nf(m.rsi14, 0)}</div></div>
+      <div class="kv"><div class="k">Mom 1/3/12m</div><div class="v" style="font-size:12.5px">${pc(m.mom1, 1)} ${pc(m.mom3, 1)} ${pc(m.mom12, 1)}</div></div>
+    </div>
+    ${(m.quality || []).map(q => `<div class="amb" style="font-size:12px;margin-bottom:4px">⚠ ${esc(q)}</div>`).join("")}
+    <div class="muted" style="font-size:12px">Bias parts → momentum ${m.bias_parts.momentum} · structure ${m.bias_parts.structure} · macro ${m.bias_parts.macro} · COT ${m.bias_parts.cot} (weights 45/30/15/10)</div>
+  </div>
+  <div class="card" style="margin-top:12px;padding:8px"><div id="ch" class="chart"></div>
+    <div class="legend"><span><i style="background:#f5a524"></i>EMA20</span><span><i style="background:#4f8cff"></i>SMA50</span><span><i style="background:#a78bfa"></i>SMA200</span>
+    ${m.levels ? `<span><i style="background:#8796a8"></i>prev. high/low</span>` : ""}${act.length ? `<span><i style="background:#22c55e"></i>target</span><span><i style="background:#ef4444"></i>stop</span>` : ""}</div></div>`;
+  if (act.length) h += `<div class="sec">Signals on the latest bar</div><div class="grid g2">${act.map(signalCard).join("")}</div>`;
+  // setups table
+  h += `<div class="sec">Edge statistics on ${esc(m.name)} (every setup, both directions, net of costs)</div><div class="card tw"><table>
+   <thead><tr><th class="l">Setup</th><th>Dir</th><th>Grade</th><th>N</th><th>Hit</th><th>95% CI</th><th>P(post)</th><th>Avg R</th><th>OOS R</th><th>Last 5y R</th><th>PF</th><th>MaxDD R</th><th>/yr</th><th class="l">Equity (R)</th></tr></thead><tbody>`;
+  for (const s of m.setups) {
+    const st = s.stats;
+    if (!st.valid) { h += `<tr><td class="l">${esc(s.label)}</td><td>${s.dir > 0 ? "L" : "S"}</td><td>${gb("X")}</td><td>${st.n}</td><td colspan="10" class="l dim">too few trades</td></tr>`; continue; }
+    h += `<tr><td class="l">${esc(s.label)}${s.active ? ' <span class="tag" style="color:var(--amber)">ACTIVE</span>' : ""}</td><td>${s.dir > 0 ? '<span class="long">L</span>' : '<span class="short">S</span>'}</td><td>${gb(s.grade)}</td>
+     <td class="mono">${st.n}</td><td class="mono">${pct0(st.hit)}</td><td class="mono dim">${pct0(st.hit_lo)}–${pct0(st.hit_hi)}</td><td class="mono">${pct0(st.p_post)}</td>
+     <td class="mono">${R(st.meanR)}</td><td class="mono">${R(st.oos_mean)}</td><td class="mono">${R(st.recent_mean)}</td><td class="mono">${st.pf === Infinity || st.pf == null ? "—" : nf(st.pf, 2)}</td><td class="mono">${nf(st.maxdd, 1)}</td><td class="mono">${nf(st.per_year, 1)}</td>
+     <td style="width:130px">${spark(s.equity.map(e => e.v), 130, 26)}</td></tr>`;
+  }
+  h += `</tbody></table><div class="muted" style="font-size:12px;margin-top:6px">P(post) = hit rate shrunk toward break-even with ${D.settings.prior} pseudo-trades. OOS = last ${Math.round(D.settings.oos * 100)}% of trades. Grade A also requires passing Benjamini-Hochberg FDR ${D.tests.q} across all ${D.tests.n} tests.</div></div>`;
+  // levels
+  const L = m.levels;
+  if (L) {
+    h += `<div class="sec">Day-trader playbook for the next session</div><div class="grid g2"><div class="card">
+      <h3>Key levels</h3><div class="plan mono">
+       <div class="kv"><div class="k">Prev high</div><div class="v">${px(L.pdh, m)}</div></div><div class="kv"><div class="k">Prev low</div><div class="v">${px(L.pdl, m)}</div></div>
+       <div class="kv"><div class="k">Pivot</div><div class="v">${px(L.pivot, m)}</div></div><div class="kv"><div class="k">R1 / S1</div><div class="v" style="font-size:12.5px">${px(L.r1, m)} / ${px(L.s1, m)}</div></div></div>
+      <h3>Conditional probabilities <span class="muted" style="font-weight:400">(${esc(L.cond)}, n=${L.n})</span></h3>
+      <table><thead><tr><th class="l">Next session…</th><th>When like today</th><th>All days</th></tr></thead><tbody>
+       <tr><td class="l">trades above prev. high</td><td class="mono">${pct0(L.p_break_high)}</td><td class="mono dim">${pct0(L.base_break_high)}</td></tr>
+       <tr><td class="l">trades below prev. low</td><td class="mono">${pct0(L.p_break_low)}</td><td class="mono dim">${pct0(L.base_break_low)}</td></tr>
+       <tr><td class="l">does both (outside day)</td><td class="mono">${pct0(L.p_both)}</td><td class="mono dim">—</td></tr>
+       <tr><td class="l">closes higher</td><td class="mono">${pct0(L.p_close_up)}</td><td class="mono dim">${pct0(L.base_close_up)}</td></tr></tbody></table></div>
+     <div class="card"><h3>Touch probabilities from the open <span class="muted" style="font-weight:400">(last 3y, n=${L.n_touch})</span></h3>
+      <table><thead><tr><th class="l">Distance</th><th>Up level*</th><th>P(touch)</th><th>Down level*</th><th>P(touch)</th></tr></thead><tbody>
+      ${L.touch.map(t => `<tr><td class="l">${t.k} ATR</td><td class="mono">${px(t.up_px, m)}</td><td class="mono">${pct0(t.up)}</td><td class="mono">${px(t.dn_px, m)}</td><td class="mono">${pct0(t.dn)}</td></tr>`).join("")}</tbody></table>
+      <div class="muted" style="font-size:12px;margin-top:6px">*Levels assume the next open ≈ last close; re-anchor on the real open. Typical session range = ${L.range_median_atr}× ATR (80th pct ${L.range_p80_atr}×). Use these to place day-trade targets where the touch probability is high and stops where it is low.</div></div></div>`;
+  }
+  // seasonality + hourly + COT
+  h += `<div class="grid g2" style="margin-top:12px"><div class="card"><h3>Seasonality — avg monthly return <span class="muted" style="font-weight:400">(base ${nf(m.season.base, 2)}%)</span></h3><div class="bars" id="seas"></div>
+    <div class="bars-l">${"JFMAMJJASOND".split("").map(c => `<span>${c}</span>`).join("")}</div><div class="muted" style="font-size:12px;margin-top:6px">Hover for t-stat. |t| &lt; 2 is noise — use only as a tie-breaker.</div></div>`;
+  if (m.hourly) h += `<div class="card"><h3>Intraday activity by hour (UTC)</h3><div class="bars" id="hours"></div><div class="bars-l"><span>0</span><span style="flex:5"></span><span>6</span><span style="flex:5"></span><span>12</span><span style="flex:5"></span><span>18</span><span style="flex:4"></span><span>23</span></div><div class="muted" style="font-size:12px;margin-top:6px">Mean absolute hourly move, last 12 months. Day-trade the tall bars; the short ones are chop & wide spreads.</div></div>`;
+  if (m.cot) h += `<div class="card"><h3>COT positioning — speculators net % of OI</h3><div style="height:90px">${spark(m.cot.series.map(x => x.v), 300, 90, "var(--violet)")}</div><div class="muted" style="font-size:12px">${esc(m.cot.date)}: ${nf(m.cot.net_pct_oi, 1)}% · ${Math.round(m.cot.pct_3y * 100)}th pct of 3y · 4w Δ ${nf(m.cot.chg_4w, 1)}. Extremes (&gt;90th / &lt;10th) are contrarian.</div></div>`;
+  h += `</div>`;
+  // setup descriptions
+  const seen = new Set();
+  h += `<details class="card" style="margin-top:12px"><summary>How each setup works and why it should have an edge</summary>${m.setups.filter(s => !seen.has(s.key) && seen.add(s.key)).map(s => `<p><b>${esc(s.label)}</b> (${esc(s.style)}) — ${esc(s.why)}<br><span class="muted">Entry: ${esc(s.entry_txt)} Exit: ${esc(s.exit_txt)}</span></p>`).join("")}</details>`;
+  $("#view").innerHTML = h;
+
+  // candlestick chart
+  const el = $("#ch");
+  const c = mkChart(el, el.clientHeight);
+  const cs = c.addCandlestickSeries({upColor: "#22c55e", downColor: "#ef4444", borderVisible: false, wickUpColor: "#22c55e", wickDownColor: "#ef4444"});
+  if (m.ohlc) cs.setData(m.candles.map(k => ({time: k.t, open: k.o, high: k.h, low: k.l, close: k.c})));
+  else cs.setData(m.candles.map((k, i, a) => ({time: k.t, open: i ? a[i - 1].c : k.c, high: Math.max(k.c, i ? a[i - 1].c : k.c), low: Math.min(k.c, i ? a[i - 1].c : k.c), close: k.c})));
+  const ln = (data, color) => { const s = c.addLineSeries({color, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false}); s.setData(data.map(d => ({time: d.t, value: d.v}))); };
+  ln(m.ema20_line, "#f5a524"); ln(m.sma50_line, "#4f8cff"); ln(m.sma200_line, "#a78bfa");
+  if (L) { cs.createPriceLine({price: L.pdh, color: "#8796a8", lineWidth: 1, lineStyle: 2, title: "PDH"}); cs.createPriceLine({price: L.pdl, color: "#8796a8", lineWidth: 1, lineStyle: 2, title: "PDL"}); }
+  for (const s of act) {
+    cs.createPriceLine({price: s.stop, color: "#ef4444", lineWidth: 1, lineStyle: 0, title: `${s.setup} SL`});
+    cs.createPriceLine({price: s.target, color: "#22c55e", lineWidth: 1, lineStyle: 0, title: `${s.setup} TP`});
+  }
+  c.timeScale().setVisibleLogicalRange({from: m.candles.length - 130, to: m.candles.length + 3});
+  // seasonality bars
+  const mx = Math.max(...m.season.months.map(x => Math.abs(x.mean || 0)), 0.01);
+  $("#seas").innerHTML = m.season.months.map(x => `<div data-tip="${"JFMAMJJASOND"[x.m - 1]}: ${nf(x.mean, 2)}% avg · up ${pct0(x.hit)} · t=${nf(x.t, 2)} · n=${x.n}" style="height:${Math.abs(x.mean || 0) / mx * 100}%;background:${(x.mean || 0) >= 0 ? "var(--up)" : "var(--down)"};opacity:${Math.min(1, 0.35 + Math.abs(x.t || 0) / 3)}"></div>`).join("");
+  tipOn($("#seas"));
+  if (m.hourly) {
+    const hm = Math.max(...m.hourly.map(x => x.absret_bp));
+    $("#hours").innerHTML = m.hourly.map(x => `<div data-tip="${x.h}:00 UTC · ${nf(x.absret_bp, 1)} bp avg move" style="height:${x.absret_bp / hm * 100}%;background:var(--blue)"></div>`).join("");
+    tipOn($("#hours"));
+  }
+}
+
+// ------------------------------------------------------------------ MACRO
+function viewMacro() {
+  const mac = D.macro;
+  const reg = mac.regime;
+  let h = `<div class="card"><div class="row" style="justify-content:space-between"><div><div class="muted" style="font-size:12px">Cross-asset regime</div>
+    <div style="font-size:24px;font-weight:700" class="${reg === "RISK-ON" ? "up" : reg === "RISK-OFF" ? "down" : "amb"}">${esc(reg)}</div></div>
+    <div class="muted" style="font-size:12.5px;max-width:520px">Score ${mac.risk == null ? "—" : nf(mac.risk, 2)} from ${mac.risk_votes || 0} votes (VIX vs 1y median, VIX term structure, S&P vs 200d, credit-spread trend). USD score ${mac.usd == null ? "—" : nf(mac.usd, 2)}.
+    Risk-on favours longs in indices, crypto, AUD and oil; risk-off favours USD, JPY, CHF, gold and bonds.</div></div></div>
+  <div class="sec">Indicators</div><div class="card tw"><table><thead><tr><th class="l">Indicator</th><th>Value</th><th>Change</th><th class="l">Reading</th><th>As of</th></tr></thead><tbody>
+  ${mac.items.map(i => `<tr><td class="l">${esc(i.label)}</td><td class="mono">${nf(i.value, 2)}${esc(i.unit)}</td><td class="mono">${i.chg == null ? "—" : (i.chg > 0 ? "+" : "") + nf(i.chg, 2)}</td><td class="l" style="white-space:normal">${esc(i.read || "")}</td><td class="mono dim">${esc(i.date || "")}</td></tr>`).join("")}
+  </tbody></table>${(mac.notes || []).map(n => `<div class="muted" style="font-size:12px;margin-top:6px">${esc(n)}</div>`).join("")}</div>
+  <div class="grid g2" style="margin-top:12px">${mac.vix_series ? `<div class="card" style="padding:8px"><h3 style="margin:4px 6px 8px">VIX</h3><div id="vixc" style="height:220px"></div></div>` : ""}
+  ${mac.dxy_series ? `<div class="card" style="padding:8px"><h3 style="margin:4px 6px 8px">US Dollar Index</h3><div id="dxyc" style="height:220px"></div></div>` : ""}</div>
+  <div class="sec">Correlation of daily returns (last ~90 sessions)</div><div class="card tw"><table class="heat"><thead><tr><th></th>${D.corr.ids.map(i => `<th>${esc(i)}</th>`).join("")}</tr></thead><tbody>
+  ${D.corr.ids.map((a, i) => `<tr><th class="l">${esc(a)}</th>${D.corr.m[i].map((v, j) => { const x = v ?? 0; const bg = x >= 0 ? `rgba(34,197,94,${Math.abs(x) * 0.75})` : `rgba(239,68,68,${Math.abs(x) * 0.75})`; return `<td class="mono" style="background:${i === j ? "#1b2531" : bg}" data-tip="${esc(a)} vs ${esc(D.corr.ids[j])}: ${v == null ? "n/a" : nf(v, 2)}">${v == null ? "" : nf(v, 1)}</td>`; }).join("")}</tr>`).join("")}
+  </tbody></table><div class="muted" style="font-size:12px;margin-top:6px">Two signals on markets with |ρ| &gt; 0.6 in the same direction are the same bet: size them as one.</div></div>`;
+  $("#view").innerHTML = h;
+  tipOn($(".heat"));
+  const line = (id, data, color) => { const el = document.getElementById(id); if (!el) return; const c = mkChart(el, 220); const s = c.addLineSeries({color, lineWidth: 2}); s.setData(data.map(d => ({time: d.t, value: d.v}))); c.timeScale().fitContent(); };
+  if (mac.vix_series) line("vixc", mac.vix_series, "#f5a524");
+  if (mac.dxy_series) line("dxyc", mac.dxy_series, "#4f8cff");
+}
+
+// ------------------------------------------------------------------ EDGE LAB
+let labSort = {k: "pval", asc: true}, labFilter = "all";
+function viewLab() {
+  const rows = [];
+  for (const m of D.markets) for (const s of m.setups) if (s.stats.valid) rows.push({m, s, ...s.stats, grade: s.grade, key: s.key});
+  const keyf = {market: r => r.m.id, setup: r => r.key, grade: r => "ABCX".indexOf(r.grade), n: r => r.n, hit: r => r.hit, p_post: r => r.p_post, meanR: r => r.meanR, e_post: r => r.e_post, oos_mean: r => r.oos_mean, recent_mean: r => r.recent_mean, pval: r => r.pval, pf: r => r.pf};
+  const f = keyf[labSort.k];
+  let list = rows.filter(r => labFilter === "all" || r.grade === labFilter);
+  list.sort((a, b) => ((f(a) ?? -1e9) > (f(b) ?? -1e9) ? 1 : -1) * (labSort.asc ? 1 : -1));
+  const counts = {A: 0, B: 0, C: 0, X: 0}; rows.forEach(r => counts[r.grade]++);
+  const th = (k, l, cls = "") => `<th class="${cls}" data-k="${k}">${l}${labSort.k === k ? (labSort.asc ? " ▲" : " ▼") : ""}</th>`;
+  let h = `<div class="card"><b>${rows.length} market × setup × direction tests.</b> ${D.tests.fdr_pass} survive a Benjamini-Hochberg false-discovery control at q=${D.tests.q}.
+   With this many tests, ~${Math.round(rows.length * 0.05)} would look "significant" at p&lt;0.05 by pure luck — that is why grade A needs the FDR pass.
+   <div class="row" style="margin-top:10px">${["all", "A", "B", "C", "X"].map(g => `<button data-f="${g}" style="background:${labFilter === g ? "#223047" : "#141c26"};color:var(--text);border:1px solid var(--line);border-radius:7px;padding:5px 10px;cursor:pointer">${g === "all" ? "All" : g} ${g === "all" ? rows.length : counts[g]}</button>`).join("")}</div></div>
+  <div class="card tw" style="margin-top:12px;max-height:75vh;overflow:auto"><table><thead><tr>${th("market", "Market", "l")}${th("setup", "Setup", "l")}<th>Dir</th>${th("grade", "Grade")}${th("n", "N")}${th("hit", "Hit")}${th("p_post", "P(post)")}${th("meanR", "Avg R")}${th("e_post", "Shrunk R")}${th("oos_mean", "OOS R")}${th("recent_mean", "5y R")}${th("pval", "p-value")}<th>FDR</th>${th("pf", "PF")}</tr></thead><tbody>
+  ${list.map(r => `<tr class="click" data-go="m-${esc(r.m.id)}"><td class="l"><b>${esc(r.m.id)}</b></td><td class="l">${esc(r.s.label)}${r.s.active ? ' <span class="tag" style="color:var(--amber)">ACTIVE</span>' : ""}</td><td>${r.s.dir > 0 ? '<span class="long">L</span>' : '<span class="short">S</span>'}</td><td>${gb(r.grade)}</td><td class="mono">${r.n}</td><td class="mono">${pct0(r.hit)}</td><td class="mono">${pct0(r.p_post)}</td><td class="mono">${R(r.meanR)}</td><td class="mono">${R(r.e_post)}</td><td class="mono">${R(r.oos_mean)}</td><td class="mono">${R(r.recent_mean)}</td><td class="mono">${r.pval < 0.001 ? "<0.001" : nf(r.pval, 3)}</td><td>${r.fdr_pass ? '<span class="up">✓</span>' : '<span class="dim">·</span>'}</td><td class="mono">${r.pf == null || r.pf === Infinity ? "—" : nf(r.pf, 2)}</td></tr>`).join("")}
+  </tbody></table></div>`;
+  $("#view").innerHTML = h;
+  document.querySelectorAll("th[data-k]").forEach(t => t.onclick = () => { const k = t.dataset.k; labSort = {k, asc: labSort.k === k ? !labSort.asc : false}; viewLab(); });
+  document.querySelectorAll("button[data-f]").forEach(b => b.onclick = () => { labFilter = b.dataset.f; viewLab(); });
+}
+
+// ------------------------------------------------------------------ METHOD
+function viewMethod() {
+  const S = D.settings;
+  $("#view").innerHTML = `<div class="card method">
+  <h3>What this dashboard does</h3>
+  <p>Every weekday it downloads ~${S.history_years} years of daily data for ${D.universe.length} liquid markets, runs a fixed library of setups whose edge has an economic or behavioural reason documented in the literature, and measures — on each market's own history — how those exact rules performed after costs. A signal is only called tradeable when the evidence is strong.</p>
+  <h3>Why these markets</h3>
+  <p>Liquid and cheap to trade for retail (CFDs, micro futures, prop firms); five asset classes so the bets are diversified; long clean history; strongly macro-driven; and the same instruments used in the classic trend-following studies.</p>
+  <h3>How the probability is computed (no magic numbers)</h3>
+  <ul>
+   <li><b>Triple-barrier test</b>: each historical signal enters at the <i>next</i> open, with a stop, a target and a time limit in ATR units. If both are hit in the same bar we assume the stop (pessimistic). Gaps through the stop fill at the open.</li>
+   <li><b>Costs</b>: a conservative round-trip spread+slippage per market is deducted from every trade (R = profit ÷ initial risk).</li>
+   <li><b>Bayesian shrinkage</b>: the hit rate is pulled toward the break-even hit rate with ${S.prior} pseudo-trades, and expectancy toward 0R, so small samples cannot look amazing.</li>
+   <li><b>Out-of-sample</b>: the last ${Math.round(S.oos * 100)}% of trades must still be positive.</li>
+   <li><b>Multiple testing</b>: ${D.tests.n} tests are run each day; Benjamini-Hochberg keeps the expected share of false discoveries ≤ ${Math.round(D.tests.q * 100)}%.</li>
+   <li><b>Grades</b>: A = N≥40, FDR pass, OOS&gt;0, shrunk expectancy ≥0.08R, bootstrap 5th pct &gt;0 · B = N≥30, p&lt;0.05, OOS&gt;0, ≥0.05R · C = positive but unproven (watch) · X = no edge.</li>
+  </ul>
+  <h3>Position sizing</h3>
+  <p>Risk per trade = min(quarter-Kelly from the shrunk statistics, ${S.base_risk}% for A, ${(S.base_risk * 0.6).toFixed(2)}% for B), capped at ${S.max_risk}%. "Units per $10k" = cash risk ÷ stop distance (FX: divide by 100,000 for lots; indices: points at $1/pt). Correlated signals are flagged so they are not sized as independent bets.</p>
+  <h3>Bias score</h3>
+  <p>A context gauge from −100 to +100: 45% volatility-scaled time-series momentum (1/3/12 months), 30% trend structure (price vs 50/200-day averages), 15% macro alignment (risk regime × the market's risk beta, USD trend × its dollar beta), 10% contrarian COT positioning. It tells you which side to prefer; it is <b>not</b> a probability.</p>
+  <h3>Honest limits</h3>
+  <ul><li>Past frequencies are not guarantees; edges decay when crowded. Check the OOS and last-5y columns.</li>
+  <li>Daily bars cannot see intrabar order; the pessimistic same-bar rule partly compensates.</li>
+  <li>Swap/financing on multi-day CFD holds is not modelled.</li>
+  <li>Free data can have errors; every market shows its source and as-of date.</li></ul>
+  </div>`;
+}
+
+// ------------------------------------------------------------------ DAY TRADING
+const IN = (D && D.intraday) || null;
+const ST = {"IN TRADE": ["#0f2c1b", "var(--up)"], "ORDERS": ["#13233d", "var(--blue)"], "WATCHING": ["#13233d", "var(--blue)"],
+  "WAITING": ["#1b2531", "var(--muted)"], "DONE": ["#1b2531", "var(--text)"], "NO TRADE": ["#1b2531", "var(--dim)"],
+  "CLOSED": ["#1b2531", "var(--dim)"], "NO DATA": ["#2a1d0b", "var(--amber)"], "ERROR": ["#3a1518", "var(--down)"],
+  "UPCOMING": ["#241a3d", "var(--violet)"], "NOT TODAY": ["#151c26", "var(--dim)"]};
+const stTag = s => { const c = ST[s] || ST.WAITING; return `<span style="background:${c[0]};color:${c[1]};border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:700;white-space:nowrap">${esc(s)}</span>`; };
+const TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return "local"; } })();
+const lt = iso => { if (!iso) return "—"; const d = new Date(iso); return isNaN(d) ? "—" : d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}); };
+const ACC = (() => { let a = {size: 100000, risk_day: 0.5, risk_swing: 0.5}; try { const s = JSON.parse(localStorage.getItem("edge_acct") || "null"); if (s) a = {...a, ...s}; } catch (e) {} return a; })();
+function saveAcc() { try { localStorage.setItem("edge_acct", JSON.stringify(ACC)); } catch (e) {} }
+function acctBar() {
+  return `<div class="card" id="acct"><div class="row" style="gap:14px;align-items:flex-end">
+    <label style="font-size:12px" class="muted">Account size ($)<br><input id="acc_size" type="number" min="0" step="1000" value="${ACC.size}" style="width:130px;background:#0e141c;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px"></label>
+    <label style="font-size:12px" class="muted">Risk per day trade (%)<br><input id="acc_rd" type="number" min="0" max="2" step="0.05" value="${ACC.risk_day}" style="width:90px;background:#0e141c;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px"></label>
+    <label style="font-size:12px" class="muted">Risk per swing trade (%)<br><input id="acc_rs" type="number" min="0" max="2" step="0.05" value="${ACC.risk_swing}" style="width:90px;background:#0e141c;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px"></label>
+    <div class="muted" style="font-size:12px;max-width:440px">Prop-firm plan from the research: 0.5% per trade, cut risk in half below −4%, stop for the day at −3%. Sizes below update from these numbers. Times are shown in your time zone (${esc(TZ)}).</div></div></div>`;
+}
+function bindAcct(rerender) {
+  const f = () => { ACC.size = +$("#acc_size").value || 0; ACC.risk_day = +$("#acc_rd").value || 0; ACC.risk_swing = +$("#acc_rs").value || 0; saveAcc(); rerender(); };
+  ["#acc_size", "#acc_rd", "#acc_rs"].forEach(id => { const el = $(id); if (el) el.addEventListener("change", f); });
+}
+function sizeText(market, entry, stop, riskPct) {
+  const dist = Math.abs(entry - stop); if (!dist || !entry) return "—";
+  const usd = ACC.size * riskPct / 100;
+  const fx = /^([A-Z]{3})\/([A-Z]{3})$/.exec(market || "");
+  if (fx) {   // units of the base currency
+    const u = fx[2] === "USD" ? usd / dist : fx[1] === "USD" ? usd * entry / dist : usd / dist;
+    return `${nf(u / 1e5, 2)} lots <span class="dim">(${nf(u, 0)} units)</span>`;
+  }
+  if (market === "Gold") { const oz = usd / dist; return `${nf(oz / 100, 2)} lots <span class="dim">(${nf(oz, 1)} oz)</span>`; }
+  if (market === "Silver") { const oz = usd / dist; return `${nf(oz / 5000, 2)} lots <span class="dim">(${nf(oz, 0)} oz)</span>`; }
+  if (market === "WTI Crude Oil") { const b = usd / dist; return `${nf(b / 1000, 2)} lots <span class="dim">(${nf(b, 0)} barrels)</span>`; }
+  if (market === "Bitcoin" || market === "Ethereum") return `${nf(usd / dist, 4)} coins`;
+  if (market === "DAX 40") return `€${nf(usd / dist, 2)} per point <span class="dim">(risk ≈ $${nf(usd, 0)})</span>`;
+  if (/yield/i.test(market || "")) return `$${nf(usd, 0)} risk on a ${nf(dist, 3)} yield move`;
+  return `$${nf(usd / dist, 2)} per point`;
+}
+function dayRisk(s) {   // distance used for sizing before / during the trade
+  const t = s.trade, p = s.plan || {};
+  if (t && t.entry != null && t.stop != null) return [t.entry, t.stop];
+  if (s.kind === "london" || s.kind === "orb") { const side = p.long || p.short; return side ? [side.entry, side.stop] : null; }
+  if (s.kind === "bigmove" && p.long) { const pc = s.levels.find(l => l[0] === "Previous close"); if (!pc) return null; const e = p.long.trigger; return [e, e - (e - pc[1]) / 2]; }
+  if ((s.kind === "monthend" || s.kind === "fomc") && p.risk) return [10000, 10000 - p.risk];
+  if (s.kind === "noise" && s.bands && s.bands.length) { const op = s.levels.find(l => l[0] === "Open"); return op ? [s.bands[0].up, op[1]] : null; }
+  return null;
+}
+function edgeLine(st) {
+  const be = Math.abs(st.avg_loss) / (st.avg_win + Math.abs(st.avg_loss));
+  return `<div class="plan mono" style="margin:8px 0">
+    <div class="kv"><div class="k">P(win)</div><div class="v">${pct0(st.hit)}</div></div>
+    <div class="kv"><div class="k">Avg win / loss</div><div class="v" style="font-size:12.5px">+${nf(st.avg_win, 2)}R / ${nf(st.avg_loss, 2)}R</div></div>
+    <div class="kv"><div class="k">Expectancy</div><div class="v">${R(st.meanR, 3)}</div></div>
+    <div class="kv"><div class="k">Since 2022</div><div class="v">${R(st.oos, 3)}</div></div>
+    <div class="kv"><div class="k">Trades / year</div><div class="v">${nf(st.per_year, 0)}</div></div>
+    <div class="kv"><div class="k">Positive years</div><div class="v">${esc(st.pos_years)}</div></div></div>
+    <div class="pbar"><div class="fill" style="width:${st.hit * 100}%;background:${st.hit > be ? "var(--up)" : "var(--amber)"}"></div><div class="be" style="left:${be * 100}%"></div></div>
+    <div class="row muted" style="font-size:11.5px;justify-content:space-between"><span>P(win) <b class="mono" style="color:var(--text)">${pct0(st.hit)}</b></span><span>break-even ${pct0(be)} ▏</span></div>`;
+}
+function evTag(e) { return e === "B" ? `<span class="badge gB" title="p<0.05, positive out-of-sample, not FDR-proof">B</span>` : `<span class="badge gC" title="Positive in all periods but not statistically proven: paper-trade first">C</span>`; }
+function dayCard(s, full) {
+  const nd = s.nd ?? 2, t = s.trade;
+  let trade = "";
+  if (t) {
+    if (t.state === "OPEN") trade = `<div class="kv" style="margin-top:8px;border-color:#1f5134"><div class="k">Open trade</div><div class="v mono"><span class="${t.dir === "LONG" ? "long" : "short"}">${esc(t.dir)}</span> @ ${nf(t.entry, nd)} · stop ${nf(t.stop, nd)} · now ${nf(t.last, nd)} (${R(t.R_now)}) · since ${lt(t.entry_time)}</div></div>`;
+    else trade = `<div class="kv" style="margin-top:8px"><div class="k">Today's result</div><div class="v mono">${t.dir ? `<span class="${t.dir === "LONG" ? "long" : "short"}">${esc(t.dir)}</span> ${nf(t.entry, nd)} → ${nf(t.exit, nd)} · ` : ""}${esc(t.outcome || "")} · ${R(t.R)}</div></div>`;
+  }
+  const rk = dayRisk(s);
+  const size = rk ? `<div class="muted" style="font-size:12.5px;margin-top:6px">Size at ${nf(ACC.risk_day, 2)}% risk: <b style="color:var(--text)">${sizeText(s.market, rk[0], rk[1], ACC.risk_day)}</b> <span class="dim">(stop distance ${nf(Math.abs(rk[0] - rk[1]), nd)})</span></div>` : "";
+  const rg = s.regime;
+  const regime = rg ? `<div class="kv" style="margin-top:8px;border-color:${rg.skip ? "#5b4511" : rg.on ? "#1f5134" : "var(--line)"}"><div class="k">Regime · ${esc(rg.factor)} (as of ${esc(rg.asof)})</div>
+    <div class="v" style="font-size:12.5px">${esc(rg.value)} → <b>${esc(rg.label)}</b>. In this regime: P(win) <b class="mono">${pct0(rg.hit)}</b>, ${R(rg.meanR)} (n=${rg.n}); other regime ${pct0(rg.other.hit)}, ${R(rg.other.meanR)}.
+    ${rg.skip ? '<br><span class="amb">No edge in this regime: skip or quarter size.</span>' : ""}${rg.note ? `<br><span class="dim">${esc(rg.note)}</span>` : ""}</div></div>` : "";
+  const times = Object.entries(s.times || {}).map(([k, v]) => `<span class="tag">${esc(k.replace("_", " "))} ${lt(v)}</span>`).join(" ");
+  const lv = (s.levels || []).map(([k, v]) => `<tr><td class="l">${esc(k)}</td><td class="mono">${typeof v === "number" ? nf(v, nd) : esc(v)}</td></tr>`).join("");
+  let bands = "";
+  if (full && s.bands) bands = `<details style="margin-top:8px"><summary>Band levels at each check</summary><table><thead><tr><th class="l">Check (your time)</th><th>Long above</th><th>Short below</th></tr></thead><tbody>${s.bands.map(b => `<tr><td class="l mono">${lt(b.t)}</td><td class="mono">${nf(b.up, nd)}</td><td class="mono">${nf(b.dn, nd)}</td></tr>`).join("")}</tbody></table></details>`;
+  return `<div class="card" id="day-${esc(s.id)}">
+    <div class="sig-head"><div><div class="sig-title">${esc(s.name)}</div><div class="muted" style="font-size:12.5px">${esc(s.market)} · ${esc(s.day)}${s.trend ? ` · daily trend ${esc(s.trend)}` : ""}</div></div>
+      <div class="row" style="gap:6px">${stTag(s.status)} ${evTag(s.evidence)}</div></div>
+    <div style="margin-top:8px">${esc(s.status_text || "")}</div>
+    ${trade}
+    ${regime}
+    ${lv ? `<table style="margin-top:8px"><tbody>${lv}</tbody></table>` : ""}
+    ${full && s.alt ? `<div class="dim" style="font-size:12px;margin-top:6px">${esc(s.alt)}</div>` : ""}
+    ${size}
+    <div class="row" style="margin-top:8px;gap:6px">${times}</div>
+    ${full ? edgeLine(s.stats) : ""}
+    ${full ? `<div id="dch-${esc(s.id)}" style="height:260px;margin-top:8px"></div>` : ""}
+    ${bands}
+    ${full ? `<details style="margin-top:8px"><summary>Rules and why it works</summary><p style="margin:8px 0 0"><b>Rules:</b> ${esc(s.rules)}</p><p class="muted" style="margin:6px 0 0;font-size:12.5px">${esc(s.why)}</p></details>` : `<div style="margin-top:8px"><a href="#day">Details & chart →</a></div>`}
+  </div>`;
+}
+function dayFreshness() {
+  if (!IN) return `<div class="banner">Day-trading engine has not run yet. It runs every 30 minutes on weekdays from GitHub Actions.</div>`;
+  const g = new Date(IN.generated_at.replace(" UTC", "Z").replace(" ", "T"));
+  const mins = Math.round((Date.now() - g) / 60000);
+  const warn = mins > 50 ? `<span class="stale">${mins > 1440 ? Math.round(mins / 1440) + " days" : mins + " min"} old</span>` : "";
+  return `<div class="muted" style="font-size:12.5px;margin:6px 0 10px">Day-trading plan updated ${lt(g.toISOString())} (${esc(IN.generated_at)}) ${warn}. GitHub runs it every 30 minutes; prices from Yahoo are a few minutes delayed, so place the levels as orders at your broker.</div>`;
+}
+function dayLogCard() {
+  const L = D.daytrade_log || [];
+  if (!L.length) return `<div class="card empty">No live day trades logged yet. Every closed trade is recorded here automatically and compared with the backtest.</div>`;
+  const by = {}; L.forEach(r => { (by[r.system] = by[r.system] || []).push(+r.R); });
+  const rows = Object.entries(by).map(([k, v]) => `<tr><td class="l">${esc(k)}</td><td class="mono">${v.length}</td><td class="mono">${pct0(v.filter(x => x > 0).length / v.length)}</td><td class="mono">${R(v.reduce((a, b) => a + b, 0) / v.length)}</td><td class="mono">${R(v.reduce((a, b) => a + b, 0), 1)}</td></tr>`).join("");
+  return `<div class="card tw"><table><thead><tr><th class="l">System</th><th>Trades</th><th>Hit</th><th>Avg</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
+  <details style="margin-top:8px"><summary>Last trades</summary><table><tbody>${L.slice(-20).reverse().map(r => `<tr><td class="l mono">${esc(r.day)}</td><td class="l">${esc(r.system)}</td><td>${esc(r.dir)}</td><td class="mono">${R(+r.R)}</td><td class="l">${esc(r.outcome)}</td></tr>`).join("")}</tbody></table></details></div>`;
+}
+function contextPanel() {
+  if (!IN) return "";
+  const c = IN.context || {}, ev = IN.events || [];
+  const vc = c.vix_curve, gx = c.gex;
+  const vtxt = vc ? `VIX ${nf(vc.vix, 1)} / VIX3M ${nf(vc.vix3m, 1)} = <b class="mono ${vc.ratio >= 1 ? "down" : "up"}">${nf(vc.ratio, 2)}</b> ${vc.ratio >= 1 ? "inverted: stress, big-move systems strongest" : "normal"} <span class="dim">(${esc(vc.asof)})</span>` : "—";
+  const gtxt = gx ? `<b class="mono ${gx.value < gx.median ? "amb" : ""}">${nf(gx.value, 2)}bn</b> vs 1-year median ${nf(gx.median, 2)}bn → ${gx.value < gx.median ? "low gamma: moves travel further" : "high gamma: dealers dampen moves"} <span class="dim">(${esc(gx.asof)})</span>` : "—";
+  return `<div class="grid g2" style="margin-bottom:12px"><div class="card"><h3>Market drivers today</h3><div class="dim" style="font-size:11.5px;margin:-4px 0 6px">Latest values (may be intraday). Each system's regime uses the previous close, exactly as in the research.</div>
+    <div style="font-size:13px;line-height:1.7"><div><span class="muted">VIX curve:</span> ${vtxt}</div><div><span class="muted">Dealer gamma (GEX):</span> ${gtxt}</div></div></div>
+    <div class="card"><h3>Event calendar</h3><table><tbody>${ev.map(e => `<tr><td class="l mono">${esc(e.date)}</td><td class="l" style="white-space:normal">${esc(e.what)}</td><td>${e.edge === "-" ? '<span class="dim">info</span>' : evTag(e.edge === "B" ? "B" : "Candidate")}</td></tr>`).join("")}</tbody></table></div></div>`;
+}
+function viewDay() {
+  if (!IN) { $("#view").innerHTML = acctBar() + dayFreshness(); bindAcct(viewDay); return; }
+  const order = {"IN TRADE": 0, "ORDERS": 1, "WATCHING": 1, "WAITING": 2, "UPCOMING": 2.5, "DONE": 3, "NO TRADE": 4, "NO DATA": 5, "CLOSED": 6, "NOT TODAY": 6.5, "ERROR": 7};
+  const sys = [...IN.systems].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+  let h = acctBar() + dayFreshness() + contextPanel();
+  h += `<div class="grid g2">${sys.map(s => dayCard(s, true)).join("")}</div>`;
+  h += `<div class="sec">Live track record (day trades)</div>` + dayLogCard();
+  h += `<div class="card" style="margin-top:12px;font-size:13px"><b>How to use it.</b> Grade <b>B</b> systems passed significance and stayed positive after 2022; grade <b>C</b> ones are positive in every period but not proven — paper-trade them first.
+  All six are small edges (+0.05 to +0.13R per trade): the profit comes from taking <i>every</i> signal at a fixed small risk, not from any single trade.
+  Research: <code>daytrade/</code> in the repo (12 years of 5-minute data, costs included).</div>`;
+  $("#view").innerHTML = h;
+  bindAcct(viewDay);
+  for (const s of sys) {
+    const el = document.getElementById("dch-" + s.id); if (!el || !s.chart || !s.chart.length) { if (el) el.innerHTML = `<div class="empty">No bars for today yet.</div>`; continue; }
+    const c = mkChart(el, 260);
+    c.applyOptions({timeScale: {timeVisible: true, secondsVisible: false, tickMarkFormatter: t => new Date(t * 1000).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})},
+      localization: {timeFormatter: t => new Date(t * 1000).toLocaleString([], {hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short"})}});
+    const cs = c.addCandlestickSeries({upColor: "#22c55e", downColor: "#ef4444", borderVisible: false, wickUpColor: "#22c55e", wickDownColor: "#ef4444"});
+    cs.setData(s.chart.map(k => ({time: k.t, open: k.o, high: k.h, low: k.l, close: k.c})));
+    for (const [k, v] of (s.levels || [])) if (typeof v === "number" && !/Risk|Range \//.test(k)) cs.createPriceLine({price: v, color: /low|Short|Sell/i.test(k) ? "#ef4444" : /high|Long|Buy/i.test(k) ? "#22c55e" : "#8796a8", lineWidth: 1, lineStyle: 2, title: k.split(" (")[0]});
+    if (s.trade && s.trade.entry) { cs.createPriceLine({price: s.trade.entry, color: "#f5a524", lineWidth: 1, title: "entry"}); if (s.trade.stop) cs.createPriceLine({price: s.trade.stop, color: "#ef4444", lineWidth: 1, title: "stop"}); }
+    c.timeScale().fitContent();
+  }
+}
+function daySummary() {
+  if (!IN) return `<div class="sec">Day trading today</div>` + dayFreshness();
+  const order = {"IN TRADE": 0, "ORDERS": 1, "WATCHING": 1, "WAITING": 2, "UPCOMING": 2.5, "DONE": 3, "NO TRADE": 4, "NO DATA": 5, "CLOSED": 6, "NOT TODAY": 6.5, "ERROR": 7};
+  const cards = [...IN.systems].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9)).map(s => {
+    const lv = (s.levels || []).filter(l => typeof l[1] === "number").slice(0, 3).map(l => `<div class="row" style="justify-content:space-between;font-size:12px"><span class="muted">${esc(l[0].split(" (")[0])}</span><b class="mono">${nf(l[1], s.nd ?? 2)}</b></div>`).join("");
+    const t = s.trade;
+    const tr = t ? (t.state === "OPEN" ? `<div class="mono" style="font-size:12.5px;margin-top:4px"><span class="${t.dir === "LONG" ? "long" : "short"}">${esc(t.dir)}</span> @ ${nf(t.entry, s.nd ?? 2)} · ${R(t.R_now)}</div>` : `<div class="mono" style="font-size:12.5px;margin-top:4px">Result ${R(t.R)}</div>`) : "";
+    return `<div class="card mk" data-go="day"><div class="mk-top"><span class="mk-name">${esc(s.market)}</span><span class="row" style="gap:5px">${stTag(s.status)} ${evTag(s.evidence)}</span></div>
+      <div class="dim" style="font-size:11.5px">${esc(s.name)}</div>
+      <div style="font-size:12.5px;margin-top:6px">${esc(s.status_text || "")}</div>${tr}
+      <div style="margin-top:6px">${lv}</div>
+      <div class="muted mono" style="font-size:11.5px;margin-top:6px">P(win) ${pct0(s.stats.hit)} · exp ${R(s.stats.meanR, 3)} · ${nf(s.stats.per_year, 0)}/yr</div></div>`;
+  }).join("");
+  return `<div class="sec">Day trading today</div>${dayFreshness()}${contextPanel()}<div class="grid g3">${cards}</div>`;
+}
+
+// ------------------------------------------------------------------ router
+function route() {
+  clearCharts();
+  const h = (location.hash || "#today").slice(1);
+  document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", h === a.dataset.v || (h.startsWith("m-") && a.dataset.v === "markets")));
+  if (h.startsWith("m-")) viewMarket(h.slice(2));
+  else ({today: viewToday, day: viewDay, markets: viewMarkets, macro: viewMacro, lab: viewLab, method: viewMethod}[h] || viewToday)();
+  window.scrollTo(0, 0);
+}
+document.addEventListener("click", e => { const g = e.target.closest("[data-go]"); if (g && !e.target.closest("a")) location.hash = g.dataset.go; });
+if (!D) { $("#view").innerHTML = '<div class="card empty">No data embedded. Run <code>python run.py</code>.</div>'; }
+else { header(); addEventListener("hashchange", route); route(); }
+</script>
+</body>
+</html>
